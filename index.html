@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Busyu / Dosu</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Busyu">
+<meta name="theme-color" content="#EEEAE2">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EEEAE2; --ink:#2A2620; --muted:#6F675C; --field:#FBF9F5; --line:#DCD4C7;
+  --shu:#C8402E; --slab:#A8916F; --ai:#2F6DB5; --gold:#E0A100;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#15130F;--ink:#EEE8DE;--muted:#9C9384;--field:#1F1C17;--line:#3A352D;--shu:#F07A6A;--slab:#6E5E47;--ai:#6FA8E8;--gold:#F2C14E}
+}
+:root[data-theme="dark"]{--bg:#15130F;--ink:#EEE8DE;--muted:#9C9384;--field:#1F1C17;--line:#3A352D;--shu:#F07A6A;--slab:#6E5E47;--ai:#6FA8E8;--gold:#F2C14E}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;padding:10px 12px;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+}
+.top{display:flex;justify-content:space-between;align-items:flex-end;width:100%;max-width:440px;margin-bottom:6px;gap:8px}
+.brand{display:flex;align-items:center;gap:8px}
+h1{font-weight:900;font-size:1.6rem;margin:0;letter-spacing:.02em}
+h1 span{color:var(--shu)}
+.icon{font:inherit;font-size:1rem;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+.icon[aria-pressed="false"]{opacity:.45}
+.stat{text-align:right;font-variant-numeric:tabular-nums}
+.stat b{font-size:1.6rem;font-weight:900}
+.stat small{display:block;color:var(--muted);font-size:.72rem}
+.stage{position:relative;flex:1;min-height:0;width:100%;max-width:440px;display:flex;justify-content:center}
+canvas{display:block;height:100%;max-width:100%;touch-action:none;border-radius:14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;max-width:440px;min-height:30px}
+.chip{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border-radius:999px;background:var(--field);border:1px solid var(--line);font-size:.8rem;font-weight:700}
+.chip i{font-style:normal;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:.9rem;background:var(--ink)}
+.chip.plain{padding:4px 12px}
+.overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;
+  gap:8px;padding:16px;text-align:center;overflow-y:auto;border-radius:14px;
+  background:color-mix(in srgb,var(--bg) 92%,transparent);z-index:5;
+}
+.overlay[hidden]{display:none}
+.overlay h2{font-size:clamp(1.9rem,8vw,2.5rem);font-weight:900;margin:0}
+.overlay p{margin:0;color:var(--muted);line-height:1.6;font-size:.84rem}
+.overlay .big{font-size:1.4rem;color:var(--ink);font-weight:900}
+.label{font-weight:700;font-size:.8rem;color:var(--ink);margin-top:2px}
+.seg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.seg button{
+  font:inherit;font-weight:900;font-size:.95rem;min-width:46px;padding:6px 10px;border-radius:12px;
+  border:2px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer;
+}
+.seg button[aria-pressed="true"]{border-color:var(--shu);background:var(--shu);color:#fff}
+.seg button:disabled{opacity:.35;cursor:default}
+.seg small{display:block;font-size:.6rem;font-weight:500;font-family:"Zen Maru Gothic",sans-serif}
+.seg.mode button{min-width:118px;padding:8px 12px}
+.seg.mode b{display:block;font-size:1.15rem}
+.seg.fonts button{min-width:56px;font-size:1.4rem;line-height:1.1;padding:5px 7px}
+.seg.stages button{min-width:40px}
+.goal{color:var(--ink)!important;font-weight:700}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.86rem;cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--shu)}
+.opts{display:flex;flex-direction:column;align-items:center;gap:6px}
+.opts[hidden]{display:none}
+button.go,button.sub{
+  font:inherit;font-weight:900;font-size:1.05rem;border:none;border-radius:999px;padding:11px 28px;
+  background:var(--shu);color:#fff;cursor:pointer;
+}
+button.go:disabled{opacity:.6}
+button.sub{background:transparent;color:var(--ink);border:2px solid var(--line)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btns [hidden]{display:none}
+.fab{
+  position:absolute;bottom:12px;height:58px;min-width:58px;border-radius:999px;padding:0 14px;
+  border:none;background:var(--ink);color:var(--field);font:inherit;font-size:1.6rem;font-weight:900;cursor:pointer;touch-action:none;z-index:2;
+}
+.fab[hidden]{display:none}
+#rot{right:12px}
+#shake{left:16px;top:52px;bottom:auto;height:40px;min-width:0;padding:0 12px;font-size:.85rem;background:var(--gold);color:#2A2620}
+/* zukan */
+#zukan{justify-content:flex-start;background:var(--bg)}
+.ztabs{display:flex;gap:6px}
+.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;width:100%;max-width:400px}
+.zgrid.words{grid-template-columns:repeat(auto-fill,minmax(82px,1fr))}
+.zgrid button{font:inherit;font-size:1.35rem;font-weight:900;height:46px;border-radius:10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer;padding:0}
+.zgrid.words button{font-size:1.1rem}
+.zgrid button.un{color:var(--line);font-size:1rem}
+.zcard{width:100%;max-width:400px;background:var(--field);border:1.5px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:14px;align-items:center;text-align:left}
+.zcard[hidden]{display:none}
+.zcard .zk{font-size:3rem;font-weight:900;line-height:1;min-width:64px;text-align:center}
+.zcard .zk.w{font-size:2rem}
+.zcard div p{color:var(--ink);font-size:.86rem}
+.zcard div p.m{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">
+    <h1 id="logo">Bu<span>syu</span></h1>
+    <button class="icon" id="sfxBtn" aria-label="効果音">🔊</button>
+    <button class="icon" id="bgmBtn" aria-label="BGM">🎵</button>
+  </div>
+  <div class="stat"><small id="lv"></small><b id="score">0</b><small id="best"></small></div>
+</div>
+<div class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <button class="fab" id="rot" hidden aria-label="回転">↻</button>
+  <button class="fab" id="shake" hidden aria-label="箱をゆらす">ゆらす</button>
+  <div class="overlay" id="start">
+    <div class="seg mode" id="modes" role="group" aria-label="モード">
+      <button data-mode="busyu"><b>Busyu</b><small>同じ部首で消す</small></button>
+      <button data-mode="dosu"><b>Dosu</b><small>落とさず積む</small></button>
+    </div>
+    <div class="seg" id="plays" role="group" aria-label="遊び方"></div>
+    <p id="desc"></p>
+    <div class="opts" id="stageOpts">
+      <div class="seg stages" id="stages"></div>
+      <p class="goal" id="stageGoal"></p>
+    </div>
+    <div class="opts" id="busyuOpts">
+      <div class="label">出てくる部首の数</div>
+      <div class="seg" id="counts"></div>
+      <label class="toggle"><input type="checkbox" id="hint" checked>部首ごとに色分けする</label>
+    </div>
+    <div class="label">漢字の範囲</div>
+    <div class="seg" id="grades"></div>
+    <div class="label">フォント</div>
+    <div class="seg fonts" id="fonts" role="group" aria-label="フォント"></div>
+    <p id="howto"></p>
+    <div class="btns">
+      <button class="go" id="startBtn">スタート</button>
+      <button class="sub" id="zkBtn1">📖 図鑑</button>
+    </div>
+  </div>
+  <div class="overlay" id="over" hidden>
+    <h2 id="overTitle"></h2>
+    <p class="big" id="result"></p>
+    <p id="detail"></p>
+    <div class="btns">
+      <button class="go" id="nextBtn" hidden>つぎのステージ</button>
+      <button class="go" id="retryBtn">もう一回</button>
+      <button class="sub" id="setBtn">設定を変える</button>
+      <button class="sub" id="zkBtn2">📖 図鑑</button>
+    </div>
+  </div>
+  <div class="overlay" id="zukan" hidden>
+    <h2 style="font-size:1.6rem">漢字図鑑</h2>
+    <p id="zkCount"></p>
+    <div class="seg ztabs" id="ztabs"></div>
+    <div class="zcard" id="zcard" hidden></div>
+    <div class="zgrid" id="zgrid"></div>
+    <button class="sub" id="zkClose">とじる</button>
+  </div>
+</div>
+<div class="legend" id="legend"></div>
+
+<script src="matter.min.js"></script>
+<script>
+// ================= data =================
+// 字|学年(7=中学)|音|訓|意味  — grouped by radical
+const RAD_SRC=[
+ ["氵","さんずい",`海|2|カイ|うみ|うみ
+池|2|チ|いけ|いけ
+汽|2|キ|—|ゆげ
+活|2|カツ|—|いきる・いきいきする
+泳|3|エイ|およ(ぐ)|およぐ
+波|3|ハ|なみ|なみ
+湖|3|コ|みずうみ|みずうみ
+流|3|リュウ・ル|なが(れる)|ながれる
+決|3|ケツ|き(める)|きめる
+港|3|コウ|みなと|みなと
+温|3|オン|あたた(かい)|あたたかい
+漢|3|カン|—|中国の古い国の名・おとこ
+油|3|ユ|あぶら|あぶら
+洗|6|セン|あら(う)|あらう`],
+ ["木","きへん",`林|1|リン|はやし|はやし
+校|1|コウ|—|まなびや・学校
+村|1|ソン|むら|むら
+板|3|ハン・バン|いた|いた
+柱|3|チュウ|はしら|はしら
+橋|3|キョウ|はし|はし
+根|3|コン|ね|ね・もと
+植|3|ショク|う(える)|うえる
+横|3|オウ|よこ|よこ
+松|4|ショウ|まつ|まつの木
+桜|5|オウ|さくら|さくら
+机|6|キ|つくえ|つくえ`],
+ ["亻","にんべん",`休|1|キュウ|やす(む)|やすむ
+体|2|タイ・テイ|からだ|からだ
+作|2|サク・サ|つく(る)|つくる
+何|2|カ|なに・なん|なに
+住|3|ジュウ|す(む)|すむ
+使|3|シ|つか(う)|つかう
+仕|3|シ・ジ|つか(える)|つかえる
+便|4|ベン・ビン|たよ(り)|べんり・たより
+位|4|イ|くらい|くらい・いる場所
+信|4|シン|—|しんじる
+例|4|レイ|たと(える)|たとえ
+値|6|チ|ね・あたい|ねだん・あたい`],
+ ["艹","くさかんむり",`花|1|カ|はな|はな
+草|1|ソウ|くさ|くさ
+茶|2|チャ・サ|—|おちゃ
+薬|3|ヤク|くすり|くすり
+葉|3|ヨウ|は|は（植物の）
+落|3|ラク|お(ちる)|おちる
+苦|3|ク|くる(しい)・にが(い)|くるしい・にがい
+荷|3|カ|に|にもつ
+芽|4|ガ|め|め（植物の）
+菜|4|サイ|な|な・やさい
+英|4|エイ|—|すぐれる・イギリス
+若|6|ジャク|わか(い)|わかい`],
+ ["言","ごんべん",`話|2|ワ|はな(す)|はなす
+語|2|ゴ|かた(る)|ことば・かたる
+読|2|ドク・トク|よ(む)|よむ
+記|2|キ|しる(す)|かきしるす
+計|2|ケイ|はか(る)|はかる・かぞえる
+詩|3|シ|—|し（ポエム）
+調|3|チョウ|しら(べる)|しらべる・ととのえる
+談|3|ダン|—|はなしあう
+説|4|セツ|と(く)|ときあかす
+試|4|シ|ため(す)|ためす・こころみる
+訓|4|クン|—|おしえる・くんよみ
+誌|6|シ|—|かきしるす・ざっし`],
+ ["糸","いとへん",`紙|2|シ|かみ|かみ
+線|2|セン|—|すじ・せん
+細|2|サイ|ほそ(い)・こま(かい)|ほそい・こまかい
+組|2|ソ|く(む)|くむ・くみ
+絵|2|カイ・エ|—|え
+終|3|シュウ|お(わる)|おわる
+級|3|キュウ|—|だんかい・クラス
+練|3|レン|ね(る)|ねる・きたえる
+緑|3|リョク|みどり|みどり
+結|4|ケツ|むす(ぶ)|むすぶ
+給|4|キュウ|—|あたえる
+続|4|ゾク|つづ(く)|つづく`],
+ ["扌","てへん",`持|3|ジ|も(つ)|もつ
+投|3|トウ|な(げる)|なげる
+指|3|シ|ゆび・さ(す)|ゆび・さす
+拾|3|シュウ・ジュウ|ひろ(う)|ひろう
+打|3|ダ|う(つ)|うつ
+折|4|セツ|お(る)|おる
+技|5|ギ|わざ|わざ
+採|5|サイ|と(る)|とる・えらぶ
+授|5|ジュ|さず(ける)|さずける
+捨|6|シャ|す(てる)|すてる
+拡|6|カク|—|ひろげる
+押|7|オウ|お(す)|おす`],
+ ["宀","うかんむり",`家|2|カ・ケ|いえ・や|いえ
+室|2|シツ|むろ|へや
+安|3|アン|やす(い)|やすらか・やすい
+客|3|キャク|—|おきゃく
+宿|3|シュク|やど|やど
+守|3|シュ|まも(る)|まもる
+定|3|テイ|さだ(める)|さだめる・きめる
+実|3|ジツ|み|み・ほんとう
+宮|3|キュウ・グウ|みや|みや・ごてん
+寒|3|カン|さむ(い)|さむい
+害|4|ガイ|—|そこなう
+宝|6|ホウ|たから|たから`],
+ ["辶","しんにょう",`道|2|ドウ|みち|みち
+通|2|ツウ|とお(る)|とおる・かよう
+近|2|キン|ちか(い)|ちかい
+遠|2|エン|とお(い)|とおい
+週|2|シュウ|—|一週間
+送|3|ソウ|おく(る)|おくる
+進|3|シン|すす(む)|すすむ
+運|3|ウン|はこ(ぶ)|はこぶ・めぐりあわせ
+遊|3|ユウ|あそ(ぶ)|あそぶ
+速|3|ソク|はや(い)|はやい
+返|3|ヘン|かえ(す)|かえす
+達|4|タツ|—|とどく・すぐれる`],
+ ["⺮","たけかんむり",`答|2|トウ|こた(える)|こたえる
+算|2|サン|—|かぞえる
+筆|3|ヒツ|ふで|ふで
+箱|3|—|はこ|はこ
+第|3|ダイ|—|じゅんばん
+等|3|トウ|ひと(しい)|ひとしい・など
+笑|4|ショウ|わら(う)|わらう
+節|4|セツ|ふし|ふし・くぎり
+管|4|カン|くだ|くだ
+筋|6|キン|すじ|すじ
+簡|6|カン|—|てがる・かんたん
+箸|7|—|はし|はし（食事の）`],
+ ["日","ひへん",`明|2|メイ|あか(るい)|あかるい
+時|2|ジ|とき|とき
+晴|2|セイ|は(れる)|はれる
+曜|2|ヨウ|—|ようび
+暗|3|アン|くら(い)|くらい
+昭|3|ショウ|—|あきらか
+昨|4|サク|—|きのう・ひとつまえ
+映|6|エイ|うつ(る)|うつる
+暖|6|ダン|あたた(かい)|あたたかい
+晩|6|バン|—|ゆうがた・よる`],
+ ["金","かねへん",`鉄|3|テツ|—|てつ
+銀|3|ギン|—|ぎん
+鏡|4|キョウ|かがみ|かがみ
+録|4|ロク|—|かきしるす
+銅|5|ドウ|—|どう（金属）
+針|6|シン|はり|はり
+鋼|6|コウ|はがね|はがね
+鉛|7|エン|なまり|なまり
+鈴|7|レイ・リン|すず|すず
+鍋|7|—|なべ|なべ`],
+ ["口","くちへん",`味|3|ミ|あじ|あじ
+唱|4|ショウ|とな(える)|となえる
+呼|6|コ|よ(ぶ)|よぶ
+吸|6|キュウ|す(う)|すう
+吹|7|スイ|ふ(く)|ふく
+叫|7|キョウ|さけ(ぶ)|さけぶ
+吐|7|ト|は(く)|はく
+咲|7|—|さ(く)|さく
+喫|7|キツ|—|のむ・すう
+噴|7|フン|ふ(く)|ふきだす`],
+ ["女","おんなへん",`妹|2|マイ|いもうと|いもうと
+姉|2|シ|あね|あね
+始|3|シ|はじ(める)|はじめる
+好|4|コウ|す(き)|すき・このむ
+媛|4|エン|ひめ|ひめ（愛媛）
+姓|7|セイ・ショウ|—|みょうじ
+婚|7|コン|—|けっこん
+娘|7|—|むすめ|むすめ
+嫁|7|カ|よめ|よめ
+妙|7|ミョウ|—|ふしぎ・すぐれている`],
+];
+const OJAMA_SRC=`一|1|イチ|ひと(つ)|ひとつ
+乙|7|オツ|—|二番目
+了|7|リョウ|—|おわる
+丸|2|ガン|まる|まる
+九|1|キュウ・ク|ここの(つ)|ここのつ
+久|5|キュウ|ひさ(しい)|ひさしい
+才|2|サイ|—|うまれつきの力
+丈|7|ジョウ|たけ|ながさ・じょうぶ`;
+// 語|よみ|意味
+const BWORD_SRC=`茶室|ちゃしつ|茶道をする部屋
+実話|じつわ|本当にあった話
+記録|きろく|書きのこすこと
+計算|けいさん|数をかぞえて答えを出すこと
+説明|せつめい|わかるように話すこと
+調節|ちょうせつ|ちょうどよくととのえること
+談笑|だんしょう|笑いながら話すこと
+筆記|ひっき|書きとること
+細流|さいりゅう|細い川の流れ
+結婚|けっこん|夫婦になること
+緑茶|りょくちゃ|緑色の日本茶
+持続|じぞく|長くつづくこと
+指定|してい|これと決めること
+寒波|かんぱ|はげしい寒さがやってくること
+通信|つうしん|知らせを伝えること
+送信|そうしん|データなどを送ること
+遊泳|ゆうえい|泳ぐこと
+返信|へんしん|返事を送ること
+時計|とけい|時刻をはかる道具
+暖流|だんりゅう|あたたかい海の流れ
+鉄橋|てっきょう|鉄でできた橋
+始終|しじゅう|始めから終わりまで・いつも
+体温|たいおん|体の温度
+作詩|さくし|詩をつくること
+苦笑|くしょう|にがわらい
+英語|えいご|イギリスやアメリカなどのことば
+林道|りんどう|林の中の道
+村道|そんどう|村の道
+温暖|おんだん|気候があたたかいこと
+決定|けってい|はっきり決めること
+流通|りゅうつう|品物が世の中に出回ること
+洗練|せんれん|あかぬけて上品になること
+油絵|あぶらえ|油絵の具でかいた絵
+何時|なんじ|何時ごろか
+作家|さっか|小説などを書く人
+寒暖|かんだん|寒さとあたたかさ
+定時|ていじ|決まった時刻
+宝箱|たからばこ|宝物を入れる箱
+運休|うんきゅう|電車やバスが運転を休むこと
+達筆|たっぴつ|字が上手なこと
+近海|きんかい|陸に近い海
+速記|そっき|すばやく書きとること
+等級|とうきゅう|ランク・段階
+晩婚|ばんこん|年をとってからの結婚
+時速|じそく|1時間に進むきょり
+暗記|あんき|そらでおぼえること
+銅線|どうせん|銅でできた線
+鉄道|てつどう|線路の上を走る乗り物
+針葉|しんよう|針のように細い葉
+喫茶|きっさ|お茶を飲むこと
+折紙|おりがみ|紙を折っていろいろな形を作る遊び
+給油|きゅうゆ|燃料を入れること
+紙箱|かみばこ|紙でできた箱
+訓練|くんれん|くり返し練習してきたえること`;
+const DWORD_SRC=`花火|はなび|火薬で光や音を楽しむもの
+読書|どくしょ|本を読むこと
+電車|でんしゃ|電気で線路を走る乗り物
+学校|がっこう|勉強をするところ
+青空|あおぞら|晴れた青い空
+友達|ともだち|仲のよい人
+時間|じかん|時の長さ
+音楽|おんがく|音でつくる芸術
+天気|てんき|空のようす
+地図|ちず|土地のようすを表した図
+新聞|しんぶん|ニュースをのせた印刷物
+漢字|かんじ|中国から伝わった文字
+野菜|やさい|食べるために育てる草
+図書|としょ|本
+雪山|ゆきやま|雪がつもった山
+夕日|ゆうひ|夕方の太陽`;
+const IDIOM_SRC=`一石二鳥|いっせきにちょう|一つのことで二つの得をすること
+十人十色|じゅうにんといろ|考えや好みは人それぞれちがうこと
+一期一会|いちごいちえ|一生に一度の出会いを大切にすること
+温故知新|おんこちしん|昔のことを学んで新しい知識を得ること
+花鳥風月|かちょうふうげつ|自然の美しい景色
+以心伝心|いしんでんしん|言葉にしなくても心が通じ合うこと
+晴耕雨読|せいこううどく|晴れたら畑仕事、雨なら読書というのんびりした暮らし
+七転八起|しちてんはっき|何度失敗してもくじけず立ち上がること
+起承転結|きしょうてんけつ|物語や文章の組み立て方
+自画自賛|じがじさん|自分で自分をほめること
+千差万別|せんさばんべつ|いろいろなちがいがあること
+臨機応変|りんきおうへん|その場に合わせてうまく対応すること
+一心同体|いっしんどうたい|心も体も一つのように強く結びつくこと
+試行錯誤|しこうさくご|失敗をくり返しながら正しいやり方を見つけること`;
+
+const KDATA={};
+const parseK=(line,rad)=>{const [k,g,on,kun,mean]=line.split("|");KDATA[k]={k,g:+g,on,kun,mean,rad};return k};
+const RADICALS=RAD_SRC.map(([sym,name,src])=>({sym,name,all:src.split("\n").map(l=>parseK(l,name+"（"+sym+"）"))}));
+const OJAMA=OJAMA_SRC.split("\n").map(l=>parseK(l,null));
+const WORDS={};
+const parseW=(src,type)=>src.split("\n").map(l=>{const [w,yomi,mean]=l.split("|");WORDS[w]={w,yomi,mean,type};return w});
+const BUSYU_JUKUGO=parseW(BWORD_SRC,"juku");
+const DOSU_ONLY=parseW(DWORD_SRC,"juku");
+const DOSU_JUKUGO=[...DOSU_ONLY,...BUSYU_JUKUGO];
+const IDIOMS=parseW(IDIOM_SRC,"idiom");
+const ALL_KANJI=[...RADICALS.flatMap(r=>r.all),...OJAMA];
+const GRADES=[{g:2,name:"〜小2"},{g:4,name:"〜小4"},{g:6,name:"〜小6"},{g:7,name:"ぜんぶ"}];
+const gradeName=g=>g>=7?"中学":`小${g}`;
+
+const PALETTE=["#2F6DB5","#2E8B57","#C0392B","#8547B0","#C98208","#138A90","#B5457A","#6E5A3A"];
+const COUNTS=[3,4,5,6,8];
+const FALLBACK=`"Hiragino Sans","Noto Sans JP",sans-serif`;
+const FONTS=[
+  {id:"maru",name:"丸ゴシック",family:`"Zen Maru Gothic"`,weight:900},
+  {id:"mincho",name:"明朝",family:`"Shippori Mincho B1"`,weight:800},
+  {id:"fude",name:"毛筆",family:`"Yuji Syuku"`,weight:400},
+  {id:"dot",name:"ドット",family:`"DotGothic16"`,weight:400},
+  {id:"futo",name:"極太",family:`"Dela Gothic One"`,weight:400},
+  {id:"magic",name:"マジック",family:`"Yusei Magic"`,weight:400},
+];
+const BSTAGES=[
+  {count:3,goal:"clear",n:8,text:"8個消す"},
+  {count:3,time:60,goal:"clear",n:15,text:"60秒以内に15個消す"},
+  {count:4,goal:"combo",n:3,text:"3コンボを出す"},
+  {count:4,goal:"juku",n:1,chance:.5,text:"熟語を1つ完成させる（読める向きに横か縦に並べてくっつける）"},
+  {count:5,goal:"ojama",n:2,ojama:.2,item:.22,text:"お邪魔字を2つ消す（ボムで消せる）"},
+  {count:5,time:45,goal:"clear",n:20,text:"45秒以内に20個消す"},
+  {count:6,goal:"score",n:2000,text:"2000点とる"},
+  {count:8,hint:false,goal:"clear",n:15,text:"色分けなしで15個消す"},
+];
+const DSTAGES=[
+  {goal:"placed",n:5,text:"5個積む"},
+  {goal:"height",n:3,text:"高さ3字まで積む"},
+  {goal:"placed",n:10,text:"10個積む（10個目は熟語）"},
+  {goal:"shiri",n:1,shiri:.6,text:"しりとり積みを1回決める"},
+  {goal:"height",n:4,events:0,text:"風と地震の中で高さ4字まで積む"},
+  {goal:"placed",n:20,text:"20個積む"},
+];
+
+const $=id=>document.getElementById(id);
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let COL={};function readCols(){COL={ink:css("--ink"),muted:css("--muted"),field:css("--field"),line:css("--line"),shu:css("--shu"),slab:css("--slab"),ai:css("--ai"),gold:css("--gold")}}
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",readCols);
+
+let mode=store("bd-mode")==="dosu"?"dosu":"busyu";
+let play=store("bd-play")||"free";
+let F=FONTS.find(f=>f.id===store("bd-font"))||FONTS[0];
+let count=+store("busyu-count")||4;if(!COUNTS.includes(count))count=4;
+let grade=+store("bd-grade")||7;
+let stageIdx={busyu:0,dosu:0};
+$("hint").checked=store("busyu-hint")!=="0";
+const fontStr=px=>`${F.weight} ${px}px ${F.family},${FALLBACK}`;
+const inGrade=k=>KDATA[k]&&KDATA[k].g<=grade;
+const availRads=()=>RADICALS.map(r=>({...r,k:r.all.filter(inGrade)})).filter(r=>r.k.length>=3);
+const cleared_={get busyu(){return +store("bd-stage-busyu")||0},get dosu(){return +store("bd-stage-dosu")||0}};
+
+// ================= zukan (collection) =================
+let ZK;try{ZK=JSON.parse(store("bd-zukan")||"{}")}catch(e){ZK={}}
+ZK.k=ZK.k||{};ZK.w=ZK.w||{};ZK.i=ZK.i||{};
+let newSeen=0;
+function seen(type,key){
+  if(type==="k"&&!KDATA[key])return;if(type!=="k"&&!WORDS[key])return;
+  if(ZK[type][key])return;ZK[type][key]=1;newSeen++;store("bd-zukan",JSON.stringify(ZK));
+}
+
+// ================= sound =================
+let actx=null,master=null,bgmGain=null,sfxOn=store("bd-sfx")!=="0",bgmOn=store("bd-bgm")==="1";
+function ac(){
+  if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=.8;master.connect(actx.destination);
+    bgmGain=actx.createGain();bgmGain.gain.value=.22;bgmGain.connect(master)}catch(e){return null}}
+  if(actx.state==="suspended")actx.resume();return actx;
+}
+function tone(f,dur,type="triangle",vol=.15,when=0,slide=0,dest=null){
+  if(!actx)return;const t=actx.currentTime+when,o=actx.createOscillator(),g=actx.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+dur+.05);
+}
+function noise(dur,vol,freq,when=0){
+  if(!actx)return;const t=actx.currentTime+when,n=Math.floor(actx.sampleRate*dur),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+  const s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();s.buffer=buf;f.type="lowpass";f.frequency.value=freq;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(master);s.start(t);
+}
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+const SFX={
+  drop(){tone(620,.06,"square",.04)},
+  land(v){tone(140+Math.random()*30,.08,"triangle",Math.min(.18,.05+v*.02))},
+  clear(combo){const base=72+Math.min(combo,6)*2;[0,4,7].forEach((s,i)=>tone(NOTE(base+s),.18,"triangle",.12,i*.05))},
+  juku(){[0,4,7,12,16].forEach((s,i)=>tone(NOTE(76+s),.25,"square",.06,i*.07))},
+  bomb(){noise(.6,.35,900);tone(90,.45,"sine",.3,0,-50)},
+  shake(){noise(.7,.18,260)},
+  item(){tone(NOTE(84),.12,"square",.05);tone(NOTE(91),.18,"square",.05,.08)},
+  place(){tone(NOTE(67),.05,"square",.05)},
+  turn(){tone(NOTE(79),.08,"triangle",.08)},
+  over(){[0,-3,-7,-12].forEach((s,i)=>tone(NOTE(67+s),.3,"triangle",.12,i*.14))},
+  win(){[0,4,7,12,7,12].forEach((s,i)=>tone(NOTE(72+s),.22,"square",.06,i*.11))},
+  wind(){noise(3,.12,1400)},
+  quake(){noise(2,.28,140)},
+  warn(){tone(NOTE(81),.1,"square",.05);tone(NOTE(81),.1,"square",.05,.18)},
+};
+const sfx=(name,...a)=>{if(sfxOn&&ac())SFX[name](...a)};
+// background music: gentle pentatonic loop, re-generated every 8 bars
+const SCALE=[62,64,67,69,71,74,76,79,81];
+let bgmTimer=null,bgmT=0,bgmStep=0,phrase=[];
+function makePhrase(){let i=4;const p=[];for(let s=0;s<32;s++){if(Math.random()<.28){p.push(null);continue}i=Math.max(0,Math.min(SCALE.length-1,i+Math.floor(Math.random()*5)-2));p.push(SCALE[i])}return p}
+function startBgm(){
+  if(!bgmOn||bgmTimer||!ac())return;
+  bgmT=actx.currentTime+.1;bgmStep=0;phrase=makePhrase();
+  const spb=60/92/2,bass=[50,50,55,57];
+  bgmTimer=setInterval(()=>{
+    while(bgmT<actx.currentTime+.15){
+      const n=phrase[bgmStep%32],w=bgmT-actx.currentTime;
+      if(n)tone(NOTE(n),spb*1.6,"triangle",.5,w,0,bgmGain);
+      if(bgmStep%4===0)tone(NOTE(bass[Math.floor(bgmStep/8)%4]-12),spb*3.5,"sine",.6,w,0,bgmGain);
+      bgmT+=spb;bgmStep++;if(bgmStep%64===0)phrase=makePhrase();
+    }
+  },30);
+}
+function stopBgm(){clearInterval(bgmTimer);bgmTimer=null}
+function syncSoundBtns(){$("sfxBtn").setAttribute("aria-pressed",sfxOn);$("bgmBtn").setAttribute("aria-pressed",bgmOn)}
+$("sfxBtn").onclick=()=>{sfxOn=!sfxOn;store("bd-sfx",sfxOn?"1":"0");syncSoundBtns();if(sfxOn)sfx("place")};
+$("bgmBtn").onclick=()=>{bgmOn=!bgmOn;store("bd-bgm",bgmOn?"1":"0");syncSoundBtns();bgmOn?startBgm():stopBgm()};
+
+// ================= glyph -> collision shape =================
+const WW=360,WH=580,S0=50,FR=.96,N=12,RES=96,shapeCache={};
+const off=document.createElement("canvas");off.width=off.height=RES;
+const octx=off.getContext("2d",{willReadFrequently:true});
+function shapeFor(k){
+  const key=F.id+k;if(shapeCache[key])return shapeCache[key];
+  octx.clearRect(0,0,RES,RES);
+  octx.font=fontStr(RES*FR);octx.textAlign="center";octx.textBaseline="middle";octx.fillStyle="#000";
+  octx.fillText(k,RES/2,RES/2);
+  const px=octx.getImageData(0,0,RES,RES).data,cs=RES/N,grid=[];
+  for(let gy=0;gy<N;gy++){const row=[];for(let gx=0;gx<N;gx++){
+    let ink=0,tot=0;
+    for(let y=Math.floor(gy*cs);y<Math.floor((gy+1)*cs);y++)for(let x=Math.floor(gx*cs);x<Math.floor((gx+1)*cs);x++){tot++;if(px[(y*RES+x)*4+3]>110)ink++}
+    row.push(ink/tot>.2);
+  }grid.push(row)}
+  const used=grid.map(r=>r.map(()=>false)),rects=[];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    if(!grid[y][x]||used[y][x])continue;
+    let w=1;while(x+w<N&&grid[y][x+w]&&!used[y][x+w])w++;
+    let h=1;
+    outer:while(y+h<N){for(let i=0;i<w;i++)if(!grid[y+h][x+i]||used[y+h][x+i])break outer;h++}
+    for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)used[yy][xx]=true;
+    rects.push({x,y,w,h});
+  }
+  if(!rects.length)rects.push({x:N/2-2,y:N/2-2,w:4,h:4});
+  const c=S0/N;
+  return shapeCache[key]=rects.map(r=>({x:(r.x+r.w/2)*c-S0/2,y:(r.y+r.h/2)*c-S0/2,w:r.w*c,h:r.h*c}));
+}
+
+const {Engine,Bodies,Composite,Events,Body,Sleeping}=Matter;
+// spec = {glyphs:[{k,dx,rad?,oj?,item?}], sc, color?, kind?}; (x,y) = centre of the glyph group
+function buildBody(spec,x,y,angle,opts={}){
+  const parts=[];
+  spec.glyphs.forEach((g,gi)=>{for(const r of shapeFor(g.k)){
+    const pt=Bodies.rectangle(x+(g.dx+r.x)*spec.sc,y+r.y*spec.sc,r.w*spec.sc,r.h*spec.sc,{density:.002});pt.gi=gi;parts.push(pt)}});
+  const b=Body.create({parts,friction:opts.friction??.5,frictionStatic:1,frictionAir:opts.air??.01,restitution:.02,label:opts.label});
+  b.off={x:x-b.position.x,y:y-b.position.y};
+  if(angle)Body.rotate(b,angle,{x,y});
+  if(opts.static)Body.setStatic(b,true);
+  b.spec=spec;b.born=now;
+  return b;
+}
+const glyphColor=(s,g)=>g.oj?COL.muted:g.rad?($("hint").checked?g.rad.color:COL.ink):(s.color||COL.ink);
+function drawSpec(spec,x,y,a,offv,alpha=1,extra=1){
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);if(offv)ctx.translate(offv.x,offv.y);ctx.scale(spec.sc*extra,spec.sc*extra);
+  ctx.globalAlpha=alpha;ctx.textAlign="center";ctx.textBaseline="middle";
+  for(const g of spec.glyphs){
+    ctx.font=fontStr(S0*FR);
+    if(g.item){ctx.shadowColor=COL.gold;ctx.shadowBlur=10+6*Math.sin(clock*6)}
+    ctx.fillStyle=glyphColor(spec,g);ctx.fillText(g.k,g.dx,0);ctx.shadowBlur=0;
+    if(g.item){ctx.font=`16px sans-serif`;ctx.fillText(g.item==="bomb"?"💣":"〰️",g.dx+S0*.4,-S0*.4)}
+  }
+  ctx.restore();
+}
+const drawBody=(b,alpha,extra)=>drawSpec(b.spec,b.position.x,b.position.y,b.angle,b.off,alpha,extra);
+function glyphCenter(b,i){
+  const lx=b.off.x+b.spec.glyphs[i].dx*b.spec.sc,ly=b.off.y,c=Math.cos(b.angle),s=Math.sin(b.angle);
+  return{x:b.position.x+lx*c-ly*s,y:b.position.y+lx*s+ly*c};
+}
+
+// ================= canvas =================
+const cv=$("cv"),ctx=cv.getContext("2d"),stage=$("stage");
+let scale=1,dpr=1;
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  const r=stage.getBoundingClientRect();
+  scale=Math.min(r.width/WW,r.height/WH);
+  cv.style.width=WW*scale+"px";cv.style.height=WH*scale+"px";
+  cv.width=Math.round(WW*scale*dpr);cv.height=Math.round(WH*scale*dpr);
+}
+
+// ================= shared state =================
+let engine,running=false,sim=false,now=0,clock=0,acc=0,last=0,hold=null,next=null,holdX=WW/2,holdA=0,
+    score=0,ghosts=[],floats=[],particles=[],banners=[],camY=0,shakeFx=0,stg=null;
+function puff(x,y,c,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=40+Math.random()*120;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.6,c})}}
+function banner(text,color){banners.push({text,color:color||COL.shu,t:0})}
+function onLand(ev){
+  for(const p of ev.pairs){
+    for(const part of [p.bodyA,p.bodyB]){const b=part.parent;
+      if((b.label==="block"||b.label==="piece")&&!b.landed){b.landed=true;sfx("land",b.speed)}}
+  }
+}
+
+// ================= Busyu (clear mode) =================
+const B={L:18,R:342,FLOOR:560,LINE:150,HOLD:78};
+let active=[],radOf={},jukuList=[],bseq=0,cleared=0,combo=0,maxCombo=0,lastClear=-9,cooldown=0,danger=0,pending=[],
+    jukuDone=0,ojamaCleared=0,shakeStock=0,ojamaRate=0,itemRate=0,chanceRate=0,jukuCheckT=0,timeLeft=0;
+const level=()=>1+Math.floor(cleared/12);
+function busyuPiece(prev){
+  bseq++;
+  if(bseq%7===0&&jukuList.length){const w=jukuList[Math.floor(Math.random()*jukuList.length)];
+    return{glyphs:[{k:w[0],dx:-S0/2,rad:radOf[w[0]]},{k:w[1],dx:S0/2,rad:radOf[w[1]]}],sc:1,kind:"熟語"}}
+  if(bseq>8&&Math.random()<ojamaRate){const pool=OJAMA.filter(inGrade);const k=pool[Math.floor(Math.random()*pool.length)]||OJAMA[0];
+    return{glyphs:[{k,dx:0,rad:null,oj:true}],sc:1,kind:"お邪魔"}}
+  // "jukugo chance": the next kanji can join the previous one into a word
+  if(prev&&prev.glyphs.length===1&&!prev.glyphs[0].oj&&Math.random()<chanceRate){
+    const c=prev.glyphs[0].k,opts=jukuList.filter(w=>w.includes(c));
+    if(opts.length){const w=opts[Math.floor(Math.random()*opts.length)],k=w[0]===c?w[1]:w[0];
+      return{glyphs:[{k,dx:0,rad:radOf[k]}],sc:1,kind:"チャンス",word:w}}
+  }
+  const r=active[Math.floor(Math.random()*active.length)];
+  const g={k:r.k[Math.floor(Math.random()*r.k.length)],dx:0,rad:r};
+  if(bseq>5&&Math.random()<itemRate){g.item=Math.random()<.6?"bomb":"shake";return{glyphs:[g],sc:1,kind:g.item==="bomb"?"ボム":"ゆらし"}}
+  return{glyphs:[g],sc:1};
+}
+function busyuInit(){
+  const wall={isStatic:true,friction:.3,label:"wall"};
+  Composite.add(engine.world,[
+    Bodies.rectangle(WW/2,B.FLOOR+30,WW,60,wall),
+    Bodies.rectangle(B.L-30,WH/2-200,60,WH+400,wall),
+    Bodies.rectangle(B.R+30,WH/2-200,60,WH+400,wall),
+  ]);
+  Events.on(engine,"collisionStart",ev=>{
+    for(const p of ev.pairs){const pa=p.bodyA,pb=p.bodyB,a=pa.parent,b=pb.parent;
+      if(a===b||a.label!=="block"||b.label!=="block"||a.gone||b.gone)continue;
+      const ga=a.spec.glyphs[pa.gi],gb=b.spec.glyphs[pb.gi];
+      if(ga&&gb&&ga.rad&&ga.rad===gb.rad)pending.push([a,pa.gi],[b,pb.gi]);}
+  });
+  const n=Math.min(stg?stg.count:count,availRads().length);
+  if(stg&&stg.hint===false)$("hint").checked=false;
+  active=availRads().sort(()=>Math.random()-.5).slice(0,n).map((r,i)=>({...r,color:PALETTE[i]}));
+  radOf={};for(const r of active)for(const k of r.k)radOf[k]=r;
+  jukuList=BUSYU_JUKUGO.filter(w=>radOf[w[0]]&&radOf[w[1]]);
+  ojamaRate=stg?.ojama??.07;itemRate=stg?.item??.07;chanceRate=stg?.chance??.15;
+  bseq=0;cleared=0;combo=0;maxCombo=0;lastClear=-9;cooldown=0;danger=0;pending=[];jukuDone=0;ojamaCleared=0;shakeStock=0;
+  timeLeft=stg?.time||0;
+  hold=busyuPiece(null);next=busyuPiece(hold);
+}
+function touchingUnits(body,gi){
+  const out=[];
+  for(const p of engine.pairs.list){if(!p.isActive)continue;const A=p.bodyA,B=p.bodyB;
+    if(A.parent===body&&A.gi===gi)out.push([B.parent,B.gi]);else if(B.parent===body&&B.gi===gi)out.push([A.parent,A.gi])}
+  return out;
+}
+let removeMap=null;
+const isRemoved=(b,i)=>removeMap.has(b)&&removeMap.get(b).has(i);
+function markRemove(b,i){
+  if(isRemoved(b,i))return null;
+  const c=glyphCenter(b,i),g=b.spec.glyphs[i];
+  ghosts.push({spec:{glyphs:[{...g,item:null}],sc:b.spec.sc},x:c.x,y:c.y,a:b.angle,t:0});
+  puff(c.x,c.y,glyphColor(b.spec,g),8);
+  if(!removeMap.has(b))removeMap.set(b,new Set());removeMap.get(b).add(i);
+  cleared++;if(g.oj)ojamaCleared++;
+  return c;
+}
+function processClears(checkJuku){
+  removeMap=new Map();const bombs=[];let any=false;
+  // 1) same-radical groups
+  if(pending.length){
+    const seeds=pending;pending=[];const done=new Set(),key=(b,i)=>b.id+":"+i;
+    for(const [s0,i0] of seeds){
+      if(s0.gone||done.has(key(s0,i0))||!s0.spec.glyphs[i0])continue;
+      const rad=s0.spec.glyphs[i0].rad,group=[],stack=[[s0,i0]];
+      while(stack.length){const [b,i]=stack.pop();const kk=key(b,i);if(done.has(kk)||b.gone)continue;done.add(kk);group.push([b,i]);
+        for(const [o,oi] of touchingUnits(b,i))if(o.label==="block"&&o.spec.glyphs[oi]&&o.spec.glyphs[oi].rad===rad&&!done.has(key(o,oi)))stack.push([o,oi])}
+      if(group.length<2)continue;
+      combo=now-lastClear<2?combo+1:1;lastClear=now;maxCombo=Math.max(maxCombo,combo);
+      const pts=Math.round(10*group.length*level()*(1+(combo-1)*.5)*(group.length>2?1.5:1));
+      score+=pts;let cx=0,cy=0;
+      for(const [b,i] of group){const g=b.spec.glyphs[i],c=markRemove(b,i);if(!c)continue;cx+=c.x;cy+=c.y;
+        if(g.item==="bomb")bombs.push(c);if(g.item==="shake"){shakeStock++;sfx("item");banner("ゆらし ゲット！",COL.gold)}}
+      floats.push({x:cx/group.length,y:cy/group.length,text:`+${pts}`+(combo>1?`  ${combo}コンボ`:""),t:0});
+      sfx("clear",combo);any=true;
+    }
+  }
+  // 2) two kanji side by side (or top-to-bottom) that read as a word
+  if(checkJuku){
+    for(const p of engine.pairs.list){
+      if(!p.isActive)continue;const A=p.bodyA,Bp=p.bodyB,a=A.parent,b=Bp.parent;
+      if(a===b||a.label!=="block"||b.label!=="block"||a.gone||b.gone)continue;
+      const ga=a.spec.glyphs[A.gi],gb=b.spec.glyphs[Bp.gi];if(!ga||!gb||ga.oj||gb.oj)continue;
+      if(isRemoved(a,A.gi)||isRemoved(b,Bp.gi))continue;
+      const ca=glyphCenter(a,A.gi),cb=glyphCenter(b,Bp.gi);let w=null;
+      if(Math.abs(ca.y-cb.y)<S0*.55){const t=ca.x<cb.x?ga.k+gb.k:gb.k+ga.k;if(WORDS[t]&&BUSYU_JUKUGO.includes(t))w=t}
+      if(!w&&Math.abs(ca.x-cb.x)<S0*.55){const t=ca.y<cb.y?ga.k+gb.k:gb.k+ga.k;if(WORDS[t]&&BUSYU_JUKUGO.includes(t))w=t}
+      if(!w)continue;
+      for(const [bb,ii] of [[a,A.gi],[b,Bp.gi]]){const g=bb.spec.glyphs[ii];markRemove(bb,ii);if(g.item==="bomb")bombs.push(glyphCenter(bb,ii));if(g.item==="shake")shakeStock++}
+      const pts=100*level();score+=pts;jukuDone++;seen("w",w);
+      floats.push({x:(ca.x+cb.x)/2,y:(ca.y+cb.y)/2-10,text:`${w}（${WORDS[w].yomi}）+${pts}`,t:-.3,big:true});
+      banner(`熟語完成！ ${w}`);sfx("juku");any=true;
+    }
+  }
+  // 3) bombs clear everything nearby, including お邪魔字 (and set off other bombs)
+  while(bombs.length){
+    const c=bombs.pop();shakeFx=10;sfx("bomb");let n=0;
+    for(const b of Composite.allBodies(engine.world)){
+      if(b.label!=="block"||b.gone)continue;
+      b.spec.glyphs.forEach((g,i)=>{const gc=glyphCenter(b,i);
+        if(Math.hypot(gc.x-c.x,gc.y-c.y)<105&&!isRemoved(b,i)){markRemove(b,i);n++;if(g.item==="bomb")bombs.push(gc);if(g.item==="shake")shakeStock++}});
+    }
+    for(let i=0;i<30;i++){const a=Math.random()*Math.PI*2,s=100+Math.random()*200;particles.push({x:c.x,y:c.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.6,c:COL.gold})}
+    if(n){const pts=15*n*level();score+=pts;floats.push({x:c.x,y:c.y,text:`ボム！+${pts}`,t:0})}
+  }
+  if(any&&navigator.vibrate)navigator.vibrate(20);
+  // apply: a jukugo that lost one character leaves the other one behind
+  for(const [b,set] of removeMap){
+    b.gone=true;Composite.remove(engine.world,b);
+    b.spec.glyphs.forEach((g,i)=>{
+      if(set.has(i))return;
+      const c=glyphCenter(b,i);
+      const nb=buildBody({glyphs:[{...g,dx:0}],sc:b.spec.sc},c.x,c.y,b.angle,{label:"block",friction:.45});
+      nb.born=b.born;nb.landed=true;Body.setVelocity(nb,{x:b.velocity.x,y:b.velocity.y});Body.setAngularVelocity(nb,b.angularVelocity);
+      Composite.add(engine.world,nb);
+    });
+  }
+}
+function busyuX(){const hw=S0/2*(hold?hold.glyphs.length:1)+2;return Math.min(Math.max(holdX,B.L+hw),B.R-hw)}
+function busyuDrop(){
+  if(!hold||cooldown>0)return;
+  const b=buildBody(hold,busyuX(),B.HOLD,0,{label:"block",friction:.45});
+  Body.setVelocity(b,{x:0,y:2});Composite.add(engine.world,b);
+  for(const g of hold.glyphs)seen("k",g.k);if(hold.glyphs.length===2)seen("w",hold.glyphs[0].k+hold.glyphs[1].k);
+  hold=null;cooldown=.55;sfx("drop");
+}
+function doShake(){
+  if(!running||mode!=="busyu"||shakeStock<=0)return;
+  shakeStock--;shakeFx=12;sfx("shake");
+  for(const b of Composite.allBodies(engine.world))if(b.label==="block")
+    Body.setVelocity(b,{x:b.velocity.x+(Math.random()-.5)*7,y:b.velocity.y-3-Math.random()*3}),Body.setAngularVelocity(b,(Math.random()-.5)*.25);
+}
+function busyuUpdate(dt){
+  if(cooldown>0){cooldown-=dt;if(cooldown<=0&&!hold){hold=next;next=busyuPiece(hold)}}
+  let over=false;
+  for(const b of Composite.allBodies(engine.world)){
+    if(b.label!=="block"||now-b.born<1.2)continue;
+    if(b.bounds.min.y<B.LINE&&b.speed<1.2){over=true;break}
+  }
+  danger=over?danger+dt:Math.max(0,danger-dt*2);
+  if(danger>2.2){endGame("あふれた！");return}
+  if(timeLeft){timeLeft-=dt;if(timeLeft<=0){timeLeft=0;endGame("時間切れ！")}}
+  $("shake").hidden=shakeStock<=0;$("shake").textContent=`〰️ ゆらす ×${shakeStock}`;
+}
+function busyuDraw(){
+  const sx=shakeFx?(Math.random()-.5)*shakeFx:0;
+  ctx.strokeStyle=COL.line;ctx.lineWidth=4;ctx.lineJoin="round";
+  ctx.beginPath();ctx.moveTo(B.L-2+sx,B.LINE-40);ctx.lineTo(B.L-2+sx,B.FLOOR+2);ctx.lineTo(B.R+2+sx,B.FLOOR+2);ctx.lineTo(B.R+2+sx,B.LINE-40);ctx.stroke();
+  const pulse=danger>0?.5+.5*Math.sin(clock*18):0;
+  ctx.strokeStyle=COL.shu;ctx.globalAlpha=.45+.55*pulse;ctx.lineWidth=2;ctx.setLineDash([8,6]);
+  ctx.beginPath();ctx.moveTo(B.L,B.LINE);ctx.lineTo(B.R,B.LINE);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  if(running&&hold){const x=busyuX();guide(x,B.HOLD+S0/2,B.FLOOR);drawSpec(hold,x,B.HOLD,0)}
+}
+
+// ================= Dosu (stack mode) =================
+const D={SLAB:470,BS:1.2};
+let idiom,baseBodies=[],pieces=[],placed=0,seq=0,waiting=false,lastBody=null,settleT=0,dropT=0,pts=0,maxH=0,holdY=0,baseTop=0,
+    shiriDone=0,shiriRate=0,evt=null,evtTimer=0,evtFrom=3,turn=0,lastDropper=0;
+const POOL_D=()=>ALL_KANJI.filter(k=>inGrade(k)&&!OJAMA.includes(k));
+let dpool=[],shiriWords=[];
+function dosuPiece(n,prev){
+  const color=PALETTE[Math.floor(Math.random()*PALETTE.length)];
+  if(n%10===0){const w=DOSU_JUKUGO[Math.floor(Math.random()*DOSU_JUKUGO.length)];
+    return{glyphs:[{k:w[0],dx:-S0/2},{k:w[1],dx:S0/2}],sc:1,color,kind:"熟語",pts:30}}
+  const k=dpool[Math.floor(Math.random()*dpool.length)];
+  if(n%5===0){const big=Math.random()<.5;return{glyphs:[{k,dx:0}],sc:big?1.5:.65,color,kind:big?"大":"小",pts:big?20:10}}
+  if(prev&&prev.glyphs.length===1&&prev.sc===1&&Math.random()<shiriRate){
+    const opts=shiriWords.filter(w=>w[0]===prev.glyphs[0].k);
+    if(opts.length){const w=opts[Math.floor(Math.random()*opts.length)];
+      return{glyphs:[{k:w[1],dx:0}],sc:1,color,kind:"しりとり",word:w,after:prev,pts:10}}
+  }
+  return{glyphs:[{k,dx:0}],sc:1,color,kind:"",pts:10};
+}
+function dosuInit(){
+  idiom=IDIOMS[Math.floor(Math.random()*IDIOMS.length)];seen("i",idiom);
+  dpool=POOL_D();shiriWords=BUSYU_JUKUGO.filter(w=>inGrade(w[0])&&inGrade(w[1]));
+  shiriRate=stg?.shiri??.3;evtFrom=stg?.events??3;
+  const cw=S0*D.BS,x0=WW/2-cw*1.5,gy=D.SLAB-cw/2;
+  const slab=Bodies.rectangle(WW/2,D.SLAB+9,cw*4,18,{isStatic:true,friction:.8,label:"slab"});
+  baseBodies=[...idiom].map((k,i)=>buildBody({glyphs:[{k,dx:0}],sc:D.BS,color:null},x0+i*cw,gy-2,0,{static:true,label:"base",friction:.8}));
+  Composite.add(engine.world,[slab,...baseBodies]);
+  baseTop=Math.min(...baseBodies.map(b=>b.bounds.min.y));
+  pieces=[];placed=0;seq=2;waiting=false;lastBody=null;pts=0;maxH=0;shiriDone=0;evt=null;evtTimer=6;turn=0;lastDropper=0;
+  hold=dosuPiece(1,null);next=dosuPiece(2,hold);holdA=0;holdY=baseTop-120;camY=0;engine.enableSleeping=true;
+}
+function dosuDrop(){
+  if(!hold||waiting)return;
+  const x=Math.min(Math.max(holdX,20),WW-20);
+  const b=buildBody(hold,x,holdY,holdA,{label:"piece",friction:.85,air:.025});
+  Composite.add(engine.world,b);pieces.push(b);
+  for(const g of hold.glyphs)seen("k",g.k);if(hold.glyphs.length===2)seen("w",hold.glyphs[0].k+hold.glyphs[1].k);
+  lastBody=b;lastDropper=turn;waiting=true;settleT=0;dropT=now;hold=null;sfx("drop");
+}
+function towerTop(){let m=baseTop;for(const b of pieces)if(b.position.y<D.SLAB+40)m=Math.min(m,b.bounds.min.y);return m}
+const bodiesTouch=(a,b)=>engine.pairs.list.some(p=>p.isActive&&((p.bodyA.parent===a&&p.bodyB.parent===b)||(p.bodyA.parent===b&&p.bodyB.parent===a)));
+function eventForces(){
+  if(!evt||evt.t<0)return;
+  for(const b of pieces){
+    if(b.isSleeping)Sleeping.set(b,false);
+    const g=b.mass*.001;
+    const fx=evt.type==="wind"?evt.dir*g*.07*evt.str:Math.sin(evt.t*Math.PI*2*5)*g*.2*evt.str;
+    Body.applyForce(b,b.position,{x:fx,y:0});
+  }
+}
+function dosuUpdate(dt){
+  if(waiting){
+    const b=lastBody;
+    settleT=(b.isSleeping||(b.speed<.25&&b.angularSpeed<.012))?settleT+dt:0;
+    if(settleT>.35||now-dropT>4){
+      waiting=false;placed++;pts+=b.spec.pts;sfx("place");
+      if(b.spec.kind==="熟語")floats.push({x:b.position.x,y:b.bounds.min.y-10,text:`+30 熟語ボーナス`,t:0});
+      if(b.spec.word){const prevB=pieces.find(p=>p.spec===b.spec.after);
+        if(prevB&&bodiesTouch(b,prevB)&&b.position.y<prevB.position.y){
+          pts+=50;shiriDone++;seen("w",b.spec.word);sfx("juku");banner(`しりとり積み！ ${b.spec.word}`);
+          floats.push({x:b.position.x,y:b.bounds.min.y-10,text:`${b.spec.word}（${WORDS[b.spec.word].yomi}）+50`,t:-.3,big:true});
+        }}
+      if(play==="vs"){turn^=1;sfx("turn");banner(`${turn?"B":"A"}のばん`,turn?COL.ai:COL.shu)}
+      hold=next;next=dosuPiece(++seq,hold);holdA=0;
+    }
+  }
+  for(const b of pieces)if(b.position.y>D.SLAB+260){endGame(play==="vs"?`${lastDropper?"A":"B"}の勝ち！`:"落ちた！");return}
+  let top=baseTop;for(const b of pieces)if((b!==lastBody||!waiting)&&b.speed<.6)top=Math.min(top,b.bounds.min.y);
+  maxH=Math.max(maxH,(baseTop-top)/S0);
+  score=pts+Math.floor(maxH*20);
+  // wind & earthquake events once the tower gets tall
+  if(evt){evt.t+=dt;if(evt.t>evt.dur){evt=null;evtTimer=10+Math.random()*8}}
+  else if(maxH>=evtFrom){evtTimer-=dt;if(evtTimer<=0){
+    const wind=Math.random()<.5;evt={type:wind?"wind":"quake",t:-1.3,dur:wind?3:2,dir:Math.random()<.5?-1:1,str:Math.min(1.7,.7+maxH*.1),fired:false};
+    banner(wind?(evt.dir<0?"← 風がくる！":"風がくる！ →"):"地震がくる！",COL.ai);sfx("warn")}}
+  if(evt&&evt.t>=0&&!evt.fired){evt.fired=true;sfx(evt.type);if(evt.type==="quake")shakeFx=6}
+  if(evt&&evt.type==="quake"&&evt.t>=0)shakeFx=Math.max(shakeFx,3);
+  const target=towerTop()-120;holdY+=(target-holdY)*Math.min(1,dt*3);
+}
+function dosuDraw(){
+  const cw=S0*D.BS,sl=WW/2-cw*2,sr=WW/2+cw*2,qx=evt&&evt.type==="quake"&&evt.t>=0?Math.sin(evt.t*Math.PI*10)*3:0;
+  ctx.fillStyle=COL.slab;ctx.beginPath();ctx.roundRect?ctx.roundRect(sl+qx,D.SLAB,sr-sl,18,4):ctx.rect(sl+qx,D.SLAB,sr-sl,18);ctx.fill();
+  ctx.fillRect(WW/2-14+qx,D.SLAB+18,28,240);
+  ctx.font=`700 13px "Zen Maru Gothic",sans-serif`;ctx.textAlign="center";ctx.textBaseline="top";
+  ctx.fillStyle=COL.field;ctx.fillRect(WW/2-95,D.SLAB+26,190,20);
+  ctx.fillStyle=COL.muted;ctx.fillText(`${idiom}（${WORDS[idiom].yomi}）`,WW/2,D.SLAB+28);
+  ctx.textAlign="left";ctx.textBaseline="bottom";ctx.font=`700 11px "Zen Maru Gothic",sans-serif`;
+  for(let h=2;h<80;h+=2){const y=baseTop-h*S0;if(y<camY-20)break;if(y>camY+WH)continue;
+    ctx.strokeStyle=COL.line;ctx.lineWidth=1;ctx.setLineDash([2,6]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WW,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=COL.muted;ctx.fillText(`${h}字`,6,y-2)}
+  const best=+store("dosu-besth")||0;
+  if(best>0&&play==="free"){const y=baseTop-best*S0;ctx.strokeStyle=COL.shu;ctx.globalAlpha=.6;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WW,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=COL.shu;ctx.textAlign="right";ctx.fillText(`ベスト ${best.toFixed(1)}字`,WW-6,y-2);ctx.globalAlpha=1}
+  for(const b of baseBodies){ctx.save();ctx.translate(qx,0);drawBody(b);ctx.restore()}
+  if(running&&hold){guide(holdX,holdY+S0/2*hold.sc,towerTop());drawSpec(hold,holdX,holdY,holdA)}
+  // wind streaks
+  if(evt&&evt.type==="wind"&&evt.t>=0){ctx.strokeStyle=COL.ai;ctx.globalAlpha=.35;ctx.lineWidth=2;
+    for(let i=0;i<14;i++){const y=camY+((i*97+clock*30)%WH),x=((i*53+clock*400*evt.dir)%(WW+80)+WW+80)%(WW+80)-40;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-evt.dir*40,y);ctx.stroke()}ctx.globalAlpha=1}
+}
+
+// ================= loop =================
+const STEP=1000/120;
+function guide(x,y0,y1){ctx.strokeStyle=COL.line;ctx.lineWidth=2;ctx.setLineDash([3,6]);ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();ctx.setLineDash([])}
+function update(dt){
+  now+=dt;acc+=dt*1000;
+  while(acc>=STEP){
+    if(mode==="dosu")eventForces();
+    Engine.update(engine,STEP);
+    for(const b of Composite.allBodies(engine.world))if(!b.isStatic&&b.velocity.y>9)Body.setVelocity(b,{x:b.velocity.x,y:9});
+    if(mode==="busyu"){jukuCheckT+=STEP;const cj=jukuCheckT>150;if(cj)jukuCheckT=0;processClears(cj)}
+    acc-=STEP;
+  }
+  if(!running)return;
+  if(keys.left)holdX-=260*dt;if(keys.right)holdX+=260*dt;
+  holdX=Math.min(Math.max(holdX,20),WW-20);
+  if(mode==="busyu")busyuUpdate(dt);else dosuUpdate(dt);
+  if(running)checkStage();
+  hud();
+}
+function goalValue(){
+  return{clear:cleared,combo:maxCombo,juku:jukuDone,ojama:ojamaCleared,score,placed,height:maxH,shiri:shiriDone}[stg.goal];
+}
+function checkStage(){if(play==="stage"&&stg&&goalValue()>=stg.n)stageClear()}
+function draw(){
+  ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);
+  ctx.clearRect(0,0,WW,WH);
+  ctx.fillStyle=COL.field;ctx.beginPath();ctx.roundRect?ctx.roundRect(0,0,WW,WH,14):ctx.rect(0,0,WW,WH);ctx.fill();
+  if(!engine)return;
+  if(mode==="dosu"){const target=Math.min(0,holdY-90);camY+=(target-camY)*.08}else camY=0;
+  ctx.save();
+  if(shakeFx>0){ctx.translate((Math.random()-.5)*shakeFx,(Math.random()-.5)*shakeFx);shakeFx*=.92;if(shakeFx<.3)shakeFx=0}
+  ctx.translate(0,-camY);
+  if(mode==="busyu")busyuDraw();else dosuDraw();
+  for(const b of Composite.allBodies(engine.world))if(b.label==="block"||b.label==="piece")drawBody(b);
+  for(const g of ghosts)drawSpec(g.spec,g.x,g.y,g.a,null,Math.max(0,1-g.t/.3),1+g.t*1.2);
+  for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/.6);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()}
+  ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
+  for(const f of floats){if(f.t<0)continue;const life=f.big?1.8:1;ctx.globalAlpha=Math.max(0,1-f.t/life);ctx.font=`900 ${f.big?17:18}px "Zen Maru Gothic",sans-serif`;
+    const x=Math.min(Math.max(f.x,90),WW-90),y=f.y-f.t*30;
+    ctx.lineWidth=4;ctx.strokeStyle=COL.field;ctx.strokeText(f.text,x,y);ctx.fillStyle=COL.shu;ctx.fillText(f.text,x,y)}
+  ctx.globalAlpha=1;ctx.restore();
+  // screen-space HUD
+  ctx.textBaseline="alphabetic";
+  if(next){
+    const L={"熟語":"熟語！","大":"大きい！","小":"小さい！","お邪魔":"お邪魔字","チャンス":"熟語チャンス！","しりとり":"しりとり！","ボム":"ボム！","ゆらし":"ゆらし！"};
+    ctx.fillStyle=next.kind?COL.shu:COL.muted;ctx.font=`700 12px "Zen Maru Gothic",sans-serif`;ctx.textAlign="right";
+    ctx.fillText(next.kind?`つぎ・${L[next.kind]}`:"つぎ",WW-12,22);
+    if(next.word){ctx.fillStyle=COL.muted;ctx.font=`700 11px "Zen Maru Gothic",sans-serif`;ctx.fillText(`${next.word}（${WORDS[next.word].yomi}）`,WW-12,84)}
+    const k=.55/(next.glyphs.length>1?1.4:1)/(next.sc>1?1.2:1);
+    drawSpec(next,WW-12-S0*next.glyphs.length*next.sc*k/2-4,50,0,null,1,k);
+  }
+  ctx.textAlign="left";ctx.font=`700 12px "Zen Maru Gothic",sans-serif`;let y=22;
+  if(play==="stage"&&stg){
+    ctx.fillStyle=COL.ink;const v=goalValue();
+    ctx.fillText(`お題：${stg.text.replace(/（.*）/,"")}`,12,y);y+=16;
+    ctx.fillStyle=COL.shu;ctx.fillText(`${stg.goal==="height"?v.toFixed(1):v} / ${stg.n}`+(timeLeft?`　のこり ${Math.ceil(timeLeft)}秒`:""),12,y);y+=16;
+  }
+  if(play==="vs"&&running){ctx.font=`900 18px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=turn?COL.ai:COL.shu;ctx.fillText(`${turn?"B":"A"}のばん`,12,y+4)}
+  // banners
+  ctx.textAlign="center";
+  for(const b of banners){const a=b.t<.2?b.t/.2:Math.max(0,1-(b.t-1.1)/.4);ctx.globalAlpha=a;
+    ctx.font=`900 26px "Zen Maru Gothic",sans-serif`;ctx.lineWidth=6;ctx.strokeStyle=COL.field;ctx.strokeText(b.text,WW/2,WH*.36);ctx.fillStyle=b.color;ctx.fillText(b.text,WW/2,WH*.36)}
+  ctx.globalAlpha=1;
+}
+function loop(ts){
+  const dt=Math.min(.05,(ts-last)/1000);last=ts;clock+=dt;
+  if(sim)update(dt);
+  for(const g of ghosts)g.t+=dt;ghosts=ghosts.filter(g=>g.t<.3);
+  for(const f of floats)f.t+=dt;floats=floats.filter(f=>f.t<(f.big?1.8:1));
+  for(const b of banners)b.t+=dt;banners=banners.filter(b=>b.t<1.5);
+  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.life-=dt}particles=particles.filter(p=>p.life>0);
+  draw();requestAnimationFrame(loop);
+}
+function hud(){
+  $("score").textContent=play==="vs"?placed:score;
+  if(mode==="busyu"){$("lv").textContent=`レベル ${level()}・${cleared}個消した`;
+    const b=store("busyu-best-"+count);$("best").textContent=play==="free"?(`部首${count}つ`+(b?` ベスト ${b}`:"")):`ステージ ${stageIdx.busyu+1}`}
+  else if(play==="vs"){$("lv").textContent=`2人対戦・高さ ${maxH.toFixed(1)}字`;$("best").textContent="積んだ数"}
+  else{$("lv").textContent=`${placed}個・高さ ${maxH.toFixed(1)}字`;const b=store("dosu-best");$("best").textContent=play==="free"?(b?`ベスト ${b}`:""):`ステージ ${stageIdx.dosu+1}`}
+}
+
+// ================= input =================
+const keys={};
+const toWorld=e=>{const r=cv.getBoundingClientRect();return(e.clientX-r.left)/r.width*WW};
+let pressing=false;
+cv.addEventListener("pointerdown",e=>{if(!running)return;pressing=true;holdX=toWorld(e);cv.setPointerCapture(e.pointerId)});
+cv.addEventListener("pointermove",e=>{if(running&&(pressing||e.pointerType==="mouse"))holdX=toWorld(e)});
+cv.addEventListener("pointerup",e=>{if(!pressing)return;pressing=false;holdX=toWorld(e);drop()});
+cv.addEventListener("pointercancel",()=>pressing=false);
+const rotate=()=>{if(running&&mode==="dosu"&&hold)holdA+=Math.PI/4};
+$("rot").addEventListener("pointerdown",e=>{e.preventDefault();rotate()});
+$("shake").addEventListener("pointerdown",e=>{e.preventDefault();doShake()});
+addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"){keys.left=true;e.preventDefault()}
+  if(e.key==="ArrowRight"){keys.right=true;e.preventDefault()}
+  if((e.key==="ArrowUp"||e.key==="r"||e.key==="R")&&running){e.preventDefault();rotate()}
+  if((e.key==="s"||e.key==="S")&&running)doShake();
+  if((e.key===" "||e.key==="ArrowDown")&&running){e.preventDefault();drop()}
+});
+addEventListener("keyup",e=>{if(e.key==="ArrowLeft")keys.left=false;if(e.key==="ArrowRight")keys.right=false});
+const drop=()=>{if(!running)return;mode==="busyu"?busyuDrop():dosuDrop()};
+
+// ================= menus =================
+const DESC={
+  busyu:["同じ部首の漢字どうしがくっつくと消えます。熟語になる2字を読める向きに並べると大ボーナス。灰色のお邪魔字は光る💣ボムで消せます。",
+         "指で位置を決めて離すと落下（PCはマウスとクリック、←→とSpaceも可）。〰️を消すと「ゆらす」が使えます（PCはSキー）"],
+  dosu:["四字熟語の土台に漢字を積もう。両側は穴、落ちたら終わり。5個ごとに大きさが変わり、10個ごとに熟語。前の字と熟語になる字を上に乗せると「しりとり積み」ボーナス。高くなると風や地震も。",
+        "指で位置を決めて離すと落下、右下の↻で回転（PCはマウスとクリック、↑かRで回転）"],
+};
+function buildMenu(){
+  if(mode==="busyu"&&play==="vs")play="free";
+  document.querySelectorAll("#modes button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===mode));
+  const plays=[["free","フリー"],["stage","ステージ"]];if(mode==="dosu")plays.push(["vs","2人対戦"]);
+  const pb=$("plays");pb.innerHTML="";
+  for(const [id,name] of plays){const b=document.createElement("button");b.textContent=name;b.setAttribute("aria-pressed",id===play);
+    b.onclick=()=>{play=id;store("bd-play",id);buildMenu()};pb.appendChild(b)}
+  $("desc").innerHTML=play==="vs"?"1台を2人で交互に使って積み上げます。自分の番で字を落としたら負け。":DESC[mode][0];
+  $("howto").innerHTML=DESC[mode][1];
+  $("busyuOpts").hidden=!(mode==="busyu"&&play==="free");
+  $("stageOpts").hidden=play!=="stage";
+  $("logo").innerHTML=mode==="busyu"?"Bu<span>syu</span>":"Do<span>su</span>";
+  document.title=mode==="busyu"?"Busyu":"Dosu";
+  // stages
+  const list=mode==="busyu"?BSTAGES:DSTAGES,done=cleared_[mode];
+  stageIdx[mode]=Math.min(stageIdx[mode],done,list.length-1);
+  const sb=$("stages");sb.innerHTML="";
+  list.forEach((s,i)=>{const b=document.createElement("button");b.disabled=i>done;b.setAttribute("aria-pressed",i===stageIdx[mode]);
+    b.innerHTML=`${i+1}<small>${i<done?"✓":i>done?"🔒":"&nbsp;"}</small>`;b.onclick=()=>{stageIdx[mode]=i;buildMenu()};sb.appendChild(b)});
+  const cs=list[stageIdx[mode]];$("stageGoal").textContent=`ステージ${stageIdx[mode]+1}：${cs.text}`+(mode==="busyu"?`（部首${cs.count}つ）`:"");
+  // counts
+  const av=availRads().length,cb=$("counts");cb.innerHTML="";
+  for(const c of COUNTS){const b=document.createElement("button");b.setAttribute("aria-pressed",c===count);b.disabled=c>av;
+    const best=store("busyu-best-"+c);b.innerHTML=`${c}<small>${best?"ベスト "+best:"&nbsp;"}</small>`;
+    b.onclick=()=>{count=c;store("busyu-count",c);buildMenu()};cb.appendChild(b)}
+  if(count>av){count=COUNTS.filter(c=>c<=av).pop();buildMenu();return}
+  const gb=$("grades");gb.innerHTML="";
+  for(const g of GRADES){const b=document.createElement("button");b.textContent=g.name;b.setAttribute("aria-pressed",g.g===grade);
+    b.onclick=()=>{grade=g.g;store("bd-grade",g.g);buildMenu()};gb.appendChild(b)}
+  const fb=$("fonts");fb.innerHTML="";
+  for(const f of FONTS){const b=document.createElement("button");b.setAttribute("aria-pressed",f===F);b.setAttribute("aria-label",f.name);
+    b.style.fontFamily=`${f.family},${FALLBACK}`;b.style.fontWeight=f.weight;b.innerHTML=`字<small>${f.name}</small>`;
+    b.onclick=()=>{F=f;store("bd-font",f.id);buildMenu()};fb.appendChild(b)}
+}
+document.querySelectorAll("#modes button").forEach(b=>b.onclick=()=>{
+  if(b.dataset.mode!==mode&&!running){engine=null;sim=false;next=null;$("legend").innerHTML=""} // stop drawing the previous mode's board
+  mode=b.dataset.mode;store("bd-mode",mode);buildMenu()});
+function buildLegend(){
+  const el=$("legend");el.innerHTML="";
+  if(mode==="busyu")for(const r of active){const d=document.createElement("div");d.className="chip";
+    d.innerHTML=`<i style="${$("hint").checked?`background:${r.color}`:""}">${r.sym}</i>${r.name}`;el.appendChild(d)}
+  else{const d=document.createElement("div");d.className="chip plain";d.textContent=`土台：${idiom}（${WORDS[idiom].yomi}）`;el.appendChild(d)}
+}
+
+async function start(){
+  ac();startBgm();
+  $("startBtn").disabled=true;$("startBtn").textContent="読み込み中…";$("retryBtn").disabled=true;
+  try{await Promise.race([document.fonts.load(fontStr(40),ALL_KANJI.join("")+DOSU_JUKUGO.join("")+IDIOMS.join("")),new Promise(r=>setTimeout(r,4000))])}catch(e){}
+  $("startBtn").disabled=false;$("startBtn").textContent="スタート";$("retryBtn").disabled=false;
+  $("start").hidden=true;$("over").hidden=true;$("zukan").hidden=true;
+  stg=play==="stage"?(mode==="busyu"?BSTAGES:DSTAGES)[stageIdx[mode]]:null;
+  if(play==="free"||play==="vs")$("hint").checked=store("busyu-hint")!=="0";
+  else if(stg&&stg.hint!==false)$("hint").checked=true;
+  engine=Engine.create();engine.gravity.y=1;engine.positionIterations=8;engine.velocityIterations=6;
+  Events.on(engine,"collisionStart",onLand);
+  now=0;acc=0;score=0;ghosts=[];floats=[];particles=[];banners=[];camY=0;holdX=WW/2;newSeen=0;timeLeft=0;
+  if(mode==="busyu")busyuInit();else dosuInit();
+  buildLegend();hud();
+  $("rot").hidden=mode!=="dosu";$("shake").hidden=true;
+  running=true;sim=true;
+  if(stg)banner(`お題：${stg.text.replace(/（.*）/,"")}`,COL.ink);
+}
+function finish(){running=false;$("rot").hidden=true;$("shake").hidden=true}
+function endGame(title){
+  finish();let detail;
+  if(play==="vs"){detail=`${placed}個・高さ ${maxH.toFixed(1)}字まで積みました`;sfx("win")}
+  else if(play==="stage"){detail=`ステージ${stageIdx[mode]+1}：${stg.text}`;sfx("over")}
+  else if(mode==="busyu"){
+    const key="busyu-best-"+count,prev=+store(key)||0;
+    detail=`部首${active.length}つ・${cleared}個消した・熟語${jukuDone}つ・最大${maxCombo}コンボ`+(score>prev?"　自己ベスト更新！":prev?`　ベスト ${prev}`:"");
+    if(score>prev)store(key,score);sfx("over");
+  }else{
+    const prev=+store("dosu-best")||0;
+    detail=`${placed}個積んだ・最高 ${maxH.toFixed(1)}字・しりとり${shiriDone}回`+(score>prev?"　自己ベスト更新！":prev?`　ベスト ${prev}`:"");
+    if(score>prev)store("dosu-best",score);
+    if(maxH>(+store("dosu-besth")||0))store("dosu-besth",maxH.toFixed(1));sfx("over");
+  }
+  if(newSeen)detail+=`<br>📖 図鑑に${newSeen}件追加！`;
+  $("overTitle").textContent=title;$("result").textContent=play==="vs"?"":`${score} 点`;$("detail").innerHTML=detail;
+  $("nextBtn").hidden=true;$("retryBtn").textContent="もう一回";
+  hud();
+  setTimeout(()=>{sim=false;$("over").hidden=false;$("retryBtn").focus()},900);
+}
+function stageClear(){
+  finish();sfx("win");
+  const list=mode==="busyu"?BSTAGES:DSTAGES,i=stageIdx[mode];
+  if(i+1>cleared_[mode])store("bd-stage-"+mode,i+1);
+  $("overTitle").textContent="ステージクリア！";$("result").textContent=`${score} 点`;
+  $("detail").innerHTML=`ステージ${i+1}：${stg.text}`+(i+1>=list.length?"<br>全ステージクリア、おめでとう！":"")+(newSeen?`<br>📖 図鑑に${newSeen}件追加！`:"");
+  $("nextBtn").hidden=i+1>=list.length;$("retryBtn").textContent="もう一回";
+  hud();
+  setTimeout(()=>{sim=false;$("over").hidden=false;($("nextBtn").hidden?$("retryBtn"):$("nextBtn")).focus()},900);
+}
+$("startBtn").onclick=start;$("retryBtn").onclick=start;
+$("nextBtn").onclick=()=>{stageIdx[mode]++;start()};
+$("setBtn").onclick=()=>{$("over").hidden=true;buildMenu();$("start").hidden=false};
+$("hint").onchange=()=>{store("busyu-hint",$("hint").checked?"1":"0")};
+
+// ================= zukan screen =================
+let ztab="k",zFrom=null;
+function openZukan(from){zFrom=from;$(from).hidden=true;$("zukan").hidden=false;$("zcard").hidden=true;buildZukan()}
+function buildZukan(){
+  const tabs=[["k","漢字",ALL_KANJI],["w","熟語",DOSU_JUKUGO],["i","四字熟語",IDIOMS]];
+  const total=tabs.reduce((s,t)=>s+t[2].length,0),got=tabs.reduce((s,t)=>s+t[2].filter(x=>ZK[t[0]][x]).length,0);
+  $("zkCount").textContent=`あつめた数 ${got} / ${total}`;
+  const tb=$("ztabs");tb.innerHTML="";
+  for(const [id,name,list] of tabs){const b=document.createElement("button");b.setAttribute("aria-pressed",id===ztab);
+    b.innerHTML=`${name}<small>${list.filter(x=>ZK[id][x]).length}/${list.length}</small>`;b.onclick=()=>{ztab=id;$("zcard").hidden=true;buildZukan()};tb.appendChild(b)}
+  const list=tabs.find(t=>t[0]===ztab)[2],grid=$("zgrid");grid.innerHTML="";grid.className="zgrid"+(ztab==="k"?"":" words");
+  for(const x of list){const b=document.createElement("button");const has=ZK[ztab][x];
+    if(has){b.textContent=x;b.style.fontFamily=`${F.family},${FALLBACK}`;b.onclick=()=>showCard(x)}
+    else{b.textContent="？";b.className="un";b.setAttribute("aria-label","まだ出会っていない");b.disabled=true}
+    grid.appendChild(b)}
+}
+function showCard(x){
+  const c=$("zcard");c.hidden=false;
+  if(ztab==="k"){const d=KDATA[x];
+    c.innerHTML=`<span class="zk" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p>音：${d.on}　訓：${d.kun}</p><p class="m">意味：${d.mean}</p><p class="m">${d.rad?`部首：${d.rad}　`:"お邪魔字　"}${gradeName(d.g)}</p></div>`}
+  else{const d=WORDS[x];
+    c.innerHTML=`<span class="zk w" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p>${d.yomi}</p><p class="m">${d.mean}</p></div>`}
+  c.scrollIntoView({block:"nearest"});
+}
+$("zkBtn1").onclick=()=>openZukan("start");$("zkBtn2").onclick=()=>openZukan("over");
+$("zkClose").onclick=()=>{$("zukan").hidden=true;$(zFrom).hidden=false};
+addEventListener("resize",resize);
+
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+readCols();resize();buildMenu();syncSoundBtns();
+last=performance.now();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
