@@ -131,6 +131,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
       <div class="seg stages" id="stages"></div>
       <p class="goal" id="stageGoal"></p>
     </div>
+    <div class="opts" id="ruleOpts">
+      <div class="label">消える条件</div>
+      <div class="seg" id="rules" role="group" aria-label="消える条件"></div>
+    </div>
     <div class="opts" id="busyuOpts">
       <div class="label">出てくる部首の数</div>
       <div class="seg" id="counts"></div>
@@ -474,6 +478,11 @@ const DSTAGES=[
   {goal:"placed",n:20,text:"20個積む"},
 ];
 
+// where each radical sits inside the character box (fractions of the em box)
+const REGION={"氵":{t:"hen",w:.32},"木":{t:"hen",w:.38},"亻":{t:"hen",w:.3},"艹":{t:"kan",h:.32},"言":{t:"hen",w:.4},
+  "糸":{t:"hen",w:.4},"扌":{t:"hen",w:.34},"宀":{t:"kan",h:.34,tol:8},"辶":{t:"nyo",w:.32,h:.2},"⺮":{t:"kan",h:.36},
+  "日":{t:"hen",w:.33,tol:16},"金":{t:"hen",w:.4},"口":{t:"hen",w:.3,tol:10},"女":{t:"hen",w:.4}};
+const inRegion=(reg,u,v)=>reg.t==="hen"?u<reg.w:reg.t==="kan"?v<reg.h:(u<reg.w||v>1-reg.h);
 const $=id=>document.getElementById(id);
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -485,6 +494,7 @@ let play=store("bd-play")||"free";
 let F=FONTS.find(f=>f.id===store("bd-font"))||FONTS[0];
 let count=+store("busyu-count")||4;if(!COUNTS.includes(count))count=4;
 let grade=+store("bd-grade")||7;
+let rule=store("bd-rule")==="any"?"any":"rad"; // "rad": only radical parts touching clears / "any": whole character
 let stageIdx={busyu:0,dosu:0};
 $("hint").checked=store("busyu-hint")!=="0";
 const fontStr=px=>`${F.weight} ${px}px ${F.family},${FALLBACK}`;
@@ -564,8 +574,8 @@ $("bgmBtn").onclick=()=>{bgmOn=!bgmOn;store("bd-bgm",bgmOn?"1":"0");syncSoundBtn
 const WW=360,WH=580,S0=50,FR=.96,N=12,RES=96,shapeCache={};
 const off=document.createElement("canvas");off.width=off.height=RES;
 const octx=off.getContext("2d",{willReadFrequently:true});
-function shapeFor(k){
-  const key=F.id+k;if(shapeCache[key])return shapeCache[key];
+function shapeFor(k,reg=null){
+  const key=F.id+k+(reg?reg.t+(reg.w||"")+(reg.h||""):"");if(shapeCache[key])return shapeCache[key];
   octx.clearRect(0,0,RES,RES);
   octx.font=fontStr(RES*FR);octx.textAlign="center";octx.textBaseline="middle";octx.fillStyle="#000";
   octx.fillText(k,RES/2,RES/2);
@@ -573,28 +583,34 @@ function shapeFor(k){
   for(let gy=0;gy<N;gy++){const row=[];for(let gx=0;gx<N;gx++){
     let ink=0,tot=0;
     for(let y=Math.floor(gy*cs);y<Math.floor((gy+1)*cs);y++)for(let x=Math.floor(gx*cs);x<Math.floor((gx+1)*cs);x++){tot++;if(px[(y*RES+x)*4+3]>110)ink++}
-    row.push(ink/tot>.2);
+    if(ink/tot<=.2){row.push(0);continue}
+    const em0=RES/2-RES*FR/2,u=((gx+.5)*cs-em0)/(RES*FR),v=((gy+.5)*cs-em0)/(RES*FR);
+    row.push(reg&&inRegion(reg,u,v)?2:1);
   }grid.push(row)}
   const used=grid.map(r=>r.map(()=>false)),rects=[];
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
     if(!grid[y][x]||used[y][x])continue;
-    let w=1;while(x+w<N&&grid[y][x+w]&&!used[y][x+w])w++;
+    const cls=grid[y][x];
+    let w=1;while(x+w<N&&grid[y][x+w]===cls&&!used[y][x+w])w++;
     let h=1;
-    outer:while(y+h<N){for(let i=0;i<w;i++)if(!grid[y+h][x+i]||used[y+h][x+i])break outer;h++}
+    outer:while(y+h<N){for(let i=0;i<w;i++)if(grid[y+h][x+i]!==cls||used[y+h][x+i])break outer;h++}
     for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)used[yy][xx]=true;
-    rects.push({x,y,w,h});
+    rects.push({x,y,w,h,r:cls===2});
   }
-  if(!rects.length)rects.push({x:N/2-2,y:N/2-2,w:4,h:4});
+  if(!rects.length)rects.push({x:N/2-2,y:N/2-2,w:4,h:4,r:false});
   const c=S0/N;
-  return shapeCache[key]=rects.map(r=>({x:(r.x+r.w/2)*c-S0/2,y:(r.y+r.h/2)*c-S0/2,w:r.w*c,h:r.h*c}));
+  return shapeCache[key]=rects.map(r=>({x:(r.x+r.w/2)*c-S0/2,y:(r.y+r.h/2)*c-S0/2,w:r.w*c,h:r.h*c,r:r.r}));
 }
 
 const {Engine,Bodies,Composite,Events,Body,Sleeping}=Matter;
 // spec = {glyphs:[{k,dx,rad?,oj?,item?}], sc, color?, kind?}; (x,y) = centre of the glyph group
 function buildBody(spec,x,y,angle,opts={}){
   const parts=[];
-  spec.glyphs.forEach((g,gi)=>{for(const r of shapeFor(g.k)){
-    const pt=Bodies.rectangle(x+(g.dx+r.x)*spec.sc,y+r.y*spec.sc,r.w*spec.sc,r.h*spec.sc,{density:.002});pt.gi=gi;parts.push(pt)}});
+  spec.glyphs.forEach((g,gi)=>{
+    const reg=g.rad&&rule==="rad"?REGION[g.rad.sym]:null;
+    for(const r of shapeFor(g.k,reg)){
+      const pt=Bodies.rectangle(x+(g.dx+r.x)*spec.sc,y+r.y*spec.sc,r.w*spec.sc,r.h*spec.sc,{density:.002});
+      pt.gi=gi;pt.r=reg?r.r:!!g.rad;parts.push(pt)}});
   const b=Body.create({parts,friction:opts.friction??.5,frictionStatic:1,frictionAir:opts.air??.01,restitution:.02,label:opts.label});
   b.off={x:x-b.position.x,y:y-b.position.y};
   if(angle)Body.rotate(b,angle,{x,y});
@@ -609,7 +625,15 @@ function drawSpec(spec,x,y,a,offv,alpha=1,extra=1){
   for(const g of spec.glyphs){
     ctx.font=fontStr(S0*FR);
     if(g.item){ctx.shadowColor=COL.gold;ctx.shadowBlur=10+6*Math.sin(clock*6)}
-    ctx.fillStyle=glyphColor(spec,g);ctx.fillText(g.k,g.dx,0);ctx.shadowBlur=0;
+    if(g.rad&&rule==="rad"&&$("hint").checked){
+      ctx.fillStyle=COL.ink;ctx.fillText(g.k,g.dx,0);ctx.shadowBlur=0;
+      const reg=REGION[g.rad.sym],E=S0*FR,x0=g.dx-E/2,y0=-E/2;
+      ctx.save();ctx.beginPath();
+      if(reg.t==="hen"||reg.t==="nyo")ctx.rect(x0-4,y0-4,E*reg.w+4,E+8);
+      if(reg.t==="kan")ctx.rect(x0-4,y0-4,E+8,E*reg.h+4);
+      if(reg.t==="nyo")ctx.rect(x0-4,y0+E*(1-reg.h),E+8,E*reg.h+4);
+      ctx.clip();ctx.fillStyle=g.rad.color;ctx.fillText(g.k,g.dx,0);ctx.restore();
+    }else{ctx.fillStyle=glyphColor(spec,g);ctx.fillText(g.k,g.dx,0);ctx.shadowBlur=0}
     if(g.item){ctx.font=`16px sans-serif`;ctx.fillText(g.item==="bomb"?"💣":"〰️",g.dx+S0*.4,-S0*.4)}
   }
   ctx.restore();
@@ -676,7 +700,7 @@ function busyuInit(){
     for(const p of ev.pairs){const pa=p.bodyA,pb=p.bodyB,a=pa.parent,b=pb.parent;
       if(a===b||a.label!=="block"||b.label!=="block"||a.gone||b.gone)continue;
       const ga=a.spec.glyphs[pa.gi],gb=b.spec.glyphs[pb.gi];
-      if(ga&&gb&&ga.rad&&ga.rad===gb.rad)pending.push([a,pa.gi],[b,pb.gi]);}
+      if(ga&&gb&&ga.rad&&ga.rad===gb.rad&&pa.r&&pb.r)pending.push([a,pa.gi],[b,pb.gi]);}
   });
   const n=Math.min(stg?stg.count:count,availRads().length);
   if(stg&&stg.hint===false)$("hint").checked=false;
@@ -687,6 +711,17 @@ function busyuInit(){
   bseq=0;cleared=0;combo=0;maxCombo=0;lastClear=-9;cooldown=0;danger=0;pending=[];jukuDone=0;ojamaCleared=0;shakeStock=0;
   timeLeft=stg?.time||0;
   hold=busyuPiece(null);next=busyuPiece(hold);
+}
+// radical parts of two glyphs touching (or within a few px, so small radicals like 日 and 口 still count)
+function radNear(a,ia,b,ib){
+  if(rule==="any")return true;
+  const tol=(REGION[a.spec.glyphs[ia].rad.sym].tol||4)*Math.min(a.spec.sc,b.spec.sc);
+  for(const pa of a.parts){if(pa===a||pa.gi!==ia||!pa.r)continue;
+    for(const pb of b.parts){if(pb===b||pb.gi!==ib||!pb.r)continue;
+      const dx=Math.max(0,pa.bounds.min.x-pb.bounds.max.x,pb.bounds.min.x-pa.bounds.max.x);
+      const dy=Math.max(0,pa.bounds.min.y-pb.bounds.max.y,pb.bounds.min.y-pa.bounds.max.y);
+      if(dx<tol&&dy<tol)return true}}
+  return false;
 }
 function touchingUnits(body,gi){
   const out=[];
@@ -714,7 +749,7 @@ function processClears(checkJuku){
       if(s0.gone||done.has(key(s0,i0))||!s0.spec.glyphs[i0])continue;
       const rad=s0.spec.glyphs[i0].rad,group=[],stack=[[s0,i0]];
       while(stack.length){const [b,i]=stack.pop();const kk=key(b,i);if(done.has(kk)||b.gone)continue;done.add(kk);group.push([b,i]);
-        for(const [o,oi] of touchingUnits(b,i))if(o.label==="block"&&o.spec.glyphs[oi]&&o.spec.glyphs[oi].rad===rad&&!done.has(key(o,oi)))stack.push([o,oi])}
+        for(const [o,oi] of touchingUnits(b,i))if(o.label==="block"&&o!==b&&o.spec.glyphs[oi]&&o.spec.glyphs[oi].rad===rad&&!done.has(key(o,oi))&&radNear(b,i,o,oi))stack.push([o,oi])}
       if(group.length<2)continue;
       combo=now-lastClear<2?combo+1:1;lastClear=now;maxCombo=Math.max(maxCombo,combo);
       const pts=Math.round(10*group.length*level()*(1+(combo-1)*.5)*(group.length>2?1.5:1));
@@ -725,7 +760,15 @@ function processClears(checkJuku){
       sfx("clear",combo);any=true;
     }
   }
-  // 2) two kanji side by side (or top-to-bottom) that read as a word
+  // 2) two kanji side by side (or top-to-bottom) that read as a word; also catch near-touching radicals
+  if(checkJuku&&rule==="rad"){
+    for(const p of engine.pairs.list){
+      if(!p.isActive)continue;const A=p.bodyA,Bp=p.bodyB,a=A.parent,b=Bp.parent;
+      if(a===b||a.label!=="block"||b.label!=="block"||a.gone||b.gone)continue;
+      const ga=a.spec.glyphs[A.gi],gb=b.spec.glyphs[Bp.gi];
+      if(ga&&gb&&ga.rad&&ga.rad===gb.rad&&!isRemoved(a,A.gi)&&!isRemoved(b,Bp.gi)&&radNear(a,A.gi,b,Bp.gi))pending.push([a,A.gi],[b,Bp.gi]);
+    }
+  }
   if(checkJuku){
     for(const p of engine.pairs.list){
       if(!p.isActive)continue;const A=p.bodyA,Bp=p.bodyB,a=A.parent,b=Bp.parent;
@@ -1007,7 +1050,7 @@ const drop=()=>{if(!running)return;mode==="busyu"?busyuDrop():dosuDrop()};
 
 // ================= menus =================
 const DESC={
-  busyu:["同じ部首の漢字どうしがくっつくと消えます。熟語になる2字を読める向きに並べると大ボーナス。灰色のお邪魔字は光る💣ボムで消せます。",
+  busyu:["同じ部首の漢字どうしがくっつくと消えます（「部首どうし」なら部首の部分どうしが触れたときだけ）。熟語になる2字を読める向きに並べると大ボーナス。灰色のお邪魔字は光る💣ボムで消せます。",
          "指で位置を決めて離すと落下（PCはマウスとクリック、←→とSpaceも可）。〰️を消すと「ゆらす」が使えます（PCはSキー）"],
   dosu:["四字熟語の土台に漢字を積もう。両側は穴、落ちたら終わり。5個ごとに大きさが変わり、10個ごとに熟語。前の字と熟語になる字を上に乗せると「しりとり積み」ボーナス。高くなると風や地震も。",
         "指で位置を決めて離すと落下、右下の↻で回転（PCはマウスとクリック、↑かRで回転）"],
@@ -1022,6 +1065,11 @@ function buildMenu(){
   $("desc").innerHTML=play==="vs"?"1台を2人で交互に使って積み上げます。自分の番で字を落としたら負け。":DESC[mode][0];
   $("howto").innerHTML=DESC[mode][1];
   $("busyuOpts").hidden=!(mode==="busyu"&&play==="free");
+  $("ruleOpts").hidden=mode!=="busyu";
+  const rb=$("rules");rb.innerHTML="";
+  for(const [id,name,sub] of [["rad","部首どうし","色の部分が触れたら"],["any","字のどこでも","かんたん"]]){
+    const b=document.createElement("button");b.setAttribute("aria-pressed",id===rule);b.innerHTML=`${name}<small>${sub}</small>`;
+    b.onclick=()=>{rule=id;store("bd-rule",id);buildMenu()};rb.appendChild(b)}
   $("stageOpts").hidden=play!=="stage";
   $("logo").innerHTML=mode==="busyu"?"Bu<span>syu</span>":"Do<span>su</span>";
   document.title=mode==="busyu"?"Busyu":"Dosu";
