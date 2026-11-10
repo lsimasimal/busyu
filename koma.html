@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Kururi</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Busyu">
+<meta name="theme-color" content="#FFF4D6">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EEEAE2;--ink:#2A2620;--muted:#6F675C;--field:#FBF9F5;--line:#DCD4C7;--shu:#C8402E;--ai:#2F6DB5;--gold:#E0A100;
+  --dish1:#F4EFE6;--dish2:#D9CDB8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="pop"]){--bg:#15130F;--ink:#EEE8DE;--muted:#9C9384;--field:#1F1C17;--line:#3A352D;--shu:#F07A6A;--ai:#6FA8E8;--gold:#F2C14E;--dish1:#2A261F;--dish2:#141210}}
+:root[data-theme="dark"]{--bg:#15130F;--ink:#EEE8DE;--muted:#9C9384;--field:#1F1C17;--line:#3A352D;--shu:#F07A6A;--ai:#6FA8E8;--gold:#F2C14E;--dish1:#2A261F;--dish2:#141210}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;padding:8px 10px;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:440px;margin-bottom:4px;gap:8px}
+h1{font-size:1.3rem;font-weight:900;margin:0}
+h1 span{color:var(--shu)}
+.icon{font:inherit;font-size:.85rem;font-weight:700;height:34px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
+.icon[aria-pressed="false"]{opacity:.45}
+.stage{position:relative;flex:1;min-height:0;width:100%;max-width:440px;display:flex;justify-content:center}
+canvas{display:block;height:100%;max-width:100%;touch-action:none}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:10px;padding:16px;text-align:center;overflow-y:auto;
+  background:color-mix(in srgb,var(--bg) 93%,transparent);z-index:5;border-radius:16px}
+.overlay[hidden]{display:none}
+.overlay.flip{transform:rotate(180deg)}
+.overlay h2{font-size:clamp(1.6rem,7vw,2.2rem);font-weight:900;margin:0}
+.overlay p{margin:0;color:var(--muted);line-height:1.6;font-size:.86rem}
+.who{font-weight:900;font-size:1.05rem;padding:4px 14px;border-radius:999px;color:#fff}
+.who.a{background:var(--shu)}.who.b{background:var(--ai)}
+.seg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.seg button{font:inherit;font-weight:900;font-size:.95rem;padding:7px 12px;border-radius:12px;border:2px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer;min-width:52px}
+.seg button[aria-pressed="true"]{border-color:var(--shu);background:var(--shu);color:#fff}
+.seg small{display:block;font-size:.62rem;font-weight:500}
+.label{font-weight:700;font-size:.8rem}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;max-width:380px}
+.card{font:inherit;color:var(--ink);background:var(--field);border:2px solid var(--line);border-radius:16px;padding:10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.card[aria-pressed="true"]{border-color:var(--ec);box-shadow:0 0 0 2px var(--ec) inset}
+.card{position:relative}
+.card .fav{position:absolute;top:6px;left:8px;font-size:.62rem;font-weight:900;color:var(--gold)}
+.card .k{font-size:2.6rem;font-weight:900;line-height:1.1;color:var(--ec)}
+.card .y{font-size:.85rem;font-weight:900}
+.card .el{font-size:.72rem;font-weight:700;color:#fff;background:var(--ec);border-radius:999px;padding:1px 10px;margin:2px 0}
+.card .st{font-size:.68rem;color:var(--muted);line-height:1.5;text-align:left;width:100%;padding:0 4px}
+.card .st b{color:var(--gold);letter-spacing:-1px}
+.quizk{font-size:4.2rem;font-weight:900;line-height:1}
+.choices{display:grid;gap:8px;width:100%;max-width:300px}
+.choices button{font:inherit;font-size:1.3rem;font-weight:900;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
+.choices button.ok{background:#2E8B57;border-color:#2E8B57;color:#fff}
+.choices button.ng{background:var(--shu);border-color:var(--shu);color:#fff}
+button.go,button.sub{font:inherit;font-weight:900;font-size:1.05rem;border:none;border-radius:999px;padding:11px 28px;background:var(--shu);color:#fff;cursor:pointer}
+button.go:disabled{opacity:.4}
+button.sub{background:transparent;color:var(--ink);border:2px solid var(--line)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.chart{font-size:.75rem;color:var(--muted);line-height:1.6}
+.fab{position:absolute;z-index:3;border:none;border-radius:999px;font:inherit;font-weight:900;cursor:pointer;touch-action:none;padding:0 16px;height:46px}
+.fab[hidden]{display:none}
+#confirm{left:50%;transform:translateX(-50%);bottom:10px;background:var(--ink);color:var(--field);font-size:1rem}
+#confirm.topside{bottom:auto;top:10px;transform:translateX(-50%) rotate(180deg)}
+#spA{left:10px;bottom:10px;background:var(--shu);color:#fff}
+#spB{right:10px;top:10px;background:var(--ai);color:#fff;transform:rotate(180deg)}
+#spB.cpu{display:none}
+.fab:disabled{opacity:.3}
+.askbox{z-index:20!important;background:color-mix(in srgb,var(--bg) 85%,transparent)!important}
+/* pop theme for kids: pastel colours, polka dots */
+:root[data-theme="pop"]{--bg:#FFF4D6;--ink:#3B2F63;--muted:#7C70A3;--field:#FFFFFF;--line:#FFD3E6;--shu:#FF5C8A;--slab:#F4A259;--ai:#3D8BFF;--gold:#FFB400;--dish1:#FFFFFF;--dish2:#FFE39A}
+:root[data-theme="pop"] body{background:
+  radial-gradient(circle,#FFC4DD 0 7px,transparent 8px) 0 0/64px 64px,
+  radial-gradient(circle,#BFE6FF 0 6px,transparent 7px) 32px 32px/64px 64px,
+  radial-gradient(circle,#D7F5C4 0 4px,transparent 5px) 16px 48px/64px 64px,
+  #FFF4D6}
+:root[data-theme="pop"] .overlay{background:color-mix(in srgb,#FFF4D6 80%,transparent)}
+:root[data-theme="pop"] #home,:root[data-theme="pop"] #zukan{background:transparent}
+:root[data-theme="pop"] .tile{background:color-mix(in srgb,var(--tc) 14%,#fff);border-color:color-mix(in srgb,var(--tc) 35%,#fff);box-shadow:0 4px 0 color-mix(in srgb,var(--tc) 45%,#fff)}
+:root[data-theme="pop"] .seg button,:root[data-theme="pop"] .card,:root[data-theme="pop"] .chip{box-shadow:0 2px 0 var(--line)}
+.themes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.themes button{font:inherit;font-size:.78rem;font-weight:700;padding:5px 10px;border-radius:999px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
+.themes button[aria-pressed="true"]{background:var(--ink);color:var(--field);border-color:var(--ink)}
+</style>
+<script>try{const t=localStorage.getItem("bd-theme")||"pop";if(t!=="auto")document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="pop"}</script>
+
+</head>
+<body>
+<div class="top">
+  <button class="icon" id="backBtn">← ホーム</button>
+  <h1>Kuru<span>ri</span></h1>
+  <div style="display:flex;gap:6px"><button class="icon" id="voiceBtn" aria-label="読み上げ">🗣️</button><button class="icon" id="sfxBtn" aria-label="効果音">🔊</button></div>
+</div>
+<div class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <button class="fab" id="confirm" hidden>けってい</button>
+  <button class="fab" id="spA" hidden>ひっさつ！</button>
+  <button class="fab" id="spB" hidden>ひっさつ！</button>
+
+  <div class="overlay" id="menu">
+    <h2>Kuru<span style="color:var(--shu)">ri</span></h2>
+    <p>漢字をコマのように回して土俵にうちだそう。字の形どうしがぶつかって引っかかるよ。はじき出すか先に止まらせたら勝ち、3回勝負で2勝したほうの勝利！</p>
+    <div class="label">あそびかた</div>
+    <div class="seg" id="modeSeg"><button data-v="cpu">ひとりで<small>コンピューターと</small></button><button data-v="vs">ふたりで<small>1台で交互に</small></button></div>
+    <div id="lvBox"><div class="label">コンピューターの強さ</div>
+      <div class="seg" id="lvSeg"><button data-v="1">よわい</button><button data-v="2">ふつう</button><button data-v="3">つよい</button></div></div>
+    <div class="label">漢字の範囲</div>
+    <div class="seg" id="grSeg"></div>
+    <div class="label">フィールド</div>
+    <div class="seg" id="fieldSeg"></div>
+    <p class="chart">ぞくせいの相性：🌳き → ⛰️つち → 💧みず → 🔥ひ → ⚙️きん → 🌳き（矢印の先に強い）<br>⚪むぞくせい：にがても とくいも なし</p>
+    <div class="btns"><button class="go" id="startBtn">はじめる</button><button class="sub" id="menuHome">ホーム</button></div>
+  </div>
+
+  <div class="overlay" id="pick" hidden>
+    <span class="who" id="pickWho"></span>
+    <p>コマにする漢字をえらぼう。字が大きくて画数が多いほど重く、少ないほど速い。</p>
+    <div class="cards" id="cards"></div>
+    <button class="go" id="pickOk" disabled>これにする</button>
+  </div>
+
+  <div class="overlay" id="quiz" hidden>
+    <span class="who" id="quizWho"></span>
+    <p>よみクイズ！正解すると回転パワーアップ</p>
+    <div class="quizk" id="quizK"></div>
+    <div class="choices" id="choices"></div>
+    <p id="quizMsg" style="min-height:1.6em;font-weight:900;color:var(--ink)"></p>
+  </div>
+
+  <div class="overlay askbox" id="ask" hidden>
+    <p class="big" id="askMsg">ゲームをやめてホームにもどりますか？</p>
+    <div class="btns"><button class="go" id="askYes">もどる</button><button class="sub" id="askNo">つづける</button></div>
+  </div>
+  <div class="overlay" id="result" hidden>
+    <h2 id="resTitle"></h2>
+    <p id="resDetail" style="font-size:1rem;color:var(--ink)"></p>
+    <div class="btns"><button class="go" id="againBtn">もう一回</button><button class="sub" id="menuBtn">設定</button></div>
+  </div>
+</div>
+<script src="matter.min.js"></script>
+<script>
+// ================= data =================
+// 字|学年(7=中学)|音|訓|意味  — grouped by radical
+const RAD_SRC=[
+ ["氵","さんずい","#2F80D0","h.32",`水|1|スイ|みず|みず|w
+海|2|カイ|うみ|うみ
+池|2|チ|いけ|いけ
+汽|2|キ|—|ゆげ
+活|2|カツ|—|いきる・いきいきする
+泳|3|エイ|およ(ぐ)|およぐ
+波|3|ハ|なみ|なみ
+湖|3|コ|みずうみ|みずうみ
+流|3|リュウ・ル|なが(れる)|ながれる
+決|3|ケツ|き(める)|きめる
+港|3|コウ|みなと|みなと
+温|3|オン|あたた(かい)|あたたかい
+漢|3|カン|—|中国の古い国の名・おとこ
+油|3|ユ|あぶら|あぶら
+洗|6|セン|あら(う)|あらう
+澤|7|タク|さわ|さわ（沢の古い字）`],
+ ["木","きへん","#8B5A2B","h.38",`木|1|モク・ボク|き|き|w
+本|1|ホン|もと|ほん・もと|w
+森|1|シン|もり|もり|w
+林|1|リン|はやし|はやし
+校|1|コウ|—|まなびや・学校
+村|1|ソン|むら|むら
+板|3|ハン・バン|いた|いた
+柱|3|チュウ|はしら|はしら
+橋|3|キョウ|はし|はし
+根|3|コン|ね|ね・もと
+植|3|ショク|う(える)|うえる
+横|3|オウ|よこ|よこ
+松|4|ショウ|まつ|まつの木
+桜|5|オウ|さくら|さくら
+机|6|キ|つくえ|つくえ`],
+ ["亻","にんべん","#EF6C00","h.3",`人|1|ジン・ニン|ひと|ひと|w
+休|1|キュウ|やす(む)|やすむ
+体|2|タイ・テイ|からだ|からだ
+作|2|サク・サ|つく(る)|つくる
+何|2|カ|なに・なん|なに
+住|3|ジュウ|す(む)|すむ
+使|3|シ|つか(う)|つかう
+仕|3|シ・ジ|つか(える)|つかえる
+便|4|ベン・ビン|たよ(り)|べんり・たより
+位|4|イ|くらい|くらい・いる場所
+信|4|シン|—|しんじる
+例|4|レイ|たと(える)|たとえ
+値|6|チ|ね・あたい|ねだん・あたい`],
+ ["艹","くさかんむり","#3FA34D","k.32",`花|1|カ|はな|はな
+草|1|ソウ|くさ|くさ
+茶|2|チャ・サ|—|おちゃ
+薬|3|ヤク|くすり|くすり
+葉|3|ヨウ|は|は（植物の）
+落|3|ラク|お(ちる)|おちる
+苦|3|ク|くる(しい)・にが(い)|くるしい・にがい
+荷|3|カ|に|にもつ
+芽|4|ガ|め|め（植物の）
+菜|4|サイ|な|な・やさい
+英|4|エイ|—|すぐれる・イギリス
+若|6|ジャク|わか(い)|わかい`],
+ ["言","ごんべん","#4A55C0","h.4",`言|2|ゲン・ゴン|い(う)|いう・ことば|w
+話|2|ワ|はな(す)|はなす
+語|2|ゴ|かた(る)|ことば・かたる
+読|2|ドク・トク|よ(む)|よむ
+記|2|キ|しる(す)|かきしるす
+計|2|ケイ|はか(る)|はかる・かぞえる
+詩|3|シ|—|し（ポエム）
+調|3|チョウ|しら(べる)|しらべる・ととのえる
+談|3|ダン|—|はなしあう
+説|4|セツ|と(く)|ときあかす
+試|4|シ|ため(す)|ためす・こころみる
+訓|4|クン|—|おしえる・くんよみ
+誌|6|シ|—|かきしるす・ざっし`],
+ ["糸","いとへん","#A35BD6","h.4",`糸|1|シ|いと|いと|w
+紙|2|シ|かみ|かみ
+線|2|セン|—|すじ・せん
+細|2|サイ|ほそ(い)・こま(かい)|ほそい・こまかい
+組|2|ソ|く(む)|くむ・くみ
+絵|2|カイ・エ|—|え
+終|3|シュウ|お(わる)|おわる
+級|3|キュウ|—|だんかい・クラス
+練|3|レン|ね(る)|ねる・きたえる
+緑|3|リョク|みどり|みどり
+結|4|ケツ|むす(ぶ)|むすぶ
+給|4|キュウ|—|あたえる
+続|4|ゾク|つづ(く)|つづく`],
+ ["扌","てへん","#C2185B","h.34",`手|1|シュ|て|て|w
+持|3|ジ|も(つ)|もつ
+投|3|トウ|な(げる)|なげる
+指|3|シ|ゆび・さ(す)|ゆび・さす
+拾|3|シュウ・ジュウ|ひろ(う)|ひろう
+打|3|ダ|う(つ)|うつ
+折|4|セツ|お(る)|おる
+技|5|ギ|わざ|わざ
+採|5|サイ|と(る)|とる・えらぶ
+授|5|ジュ|さず(ける)|さずける
+捨|6|シャ|す(てる)|すてる
+拡|6|カク|—|ひろげる
+押|7|オウ|お(す)|おす`],
+ ["宀","うかんむり","#A1442F","k.34~8",`家|2|カ・ケ|いえ・や|いえ
+室|2|シツ|むろ|へや
+安|3|アン|やす(い)|やすらか・やすい
+客|3|キャク|—|おきゃく
+宿|3|シュク|やど|やど
+守|3|シュ|まも(る)|まもる
+定|3|テイ|さだ(める)|さだめる・きめる
+実|3|ジツ|み|み・ほんとう
+宮|3|キュウ・グウ|みや|みや・ごてん
+寒|3|カン|さむ(い)|さむい
+害|4|ガイ|—|そこなう
+宝|6|ホウ|たから|たから`],
+ ["辶","しんにょう","#5F7A94","n.32,.2",`道|2|ドウ|みち|みち
+通|2|ツウ|とお(る)|とおる・かよう
+近|2|キン|ちか(い)|ちかい
+遠|2|エン|とお(い)|とおい
+週|2|シュウ|—|一週間
+送|3|ソウ|おく(る)|おくる
+進|3|シン|すす(む)|すすむ
+運|3|ウン|はこ(ぶ)|はこぶ・めぐりあわせ
+遊|3|ユウ|あそ(ぶ)|あそぶ
+速|3|ソク|はや(い)|はやい
+返|3|ヘン|かえ(す)|かえす
+達|4|タツ|—|とどく・すぐれる`],
+ ["⺮","たけかんむり","#1F9E89","k.36",`竹|1|チク|たけ|たけ|w
+答|2|トウ|こた(える)|こたえる
+算|2|サン|—|かぞえる
+筆|3|ヒツ|ふで|ふで
+箱|3|—|はこ|はこ
+第|3|ダイ|—|じゅんばん
+等|3|トウ|ひと(しい)|ひとしい・など
+笑|4|ショウ|わら(う)|わらう
+節|4|セツ|ふし|ふし・くぎり
+管|4|カン|くだ|くだ
+筋|6|キン|すじ|すじ
+簡|6|カン|—|てがる・かんたん
+箸|7|—|はし|はし（食事の）`],
+ ["日","ひへん","#F2B705","h.33~16",`日|1|ニチ・ジツ|ひ|ひ・おひさま|w
+早|1|ソウ|はや(い)|はやい|k.5
+星|2|セイ|ほし|ほし|k.5
+明|2|メイ|あか(るい)|あかるい
+時|2|ジ|とき|とき
+晴|2|セイ|は(れる)|はれる
+曜|2|ヨウ|—|ようび
+暗|3|アン|くら(い)|くらい
+昭|3|ショウ|—|あきらか
+昨|4|サク|—|きのう・ひとつまえ
+映|6|エイ|うつ(る)|うつる
+暖|6|ダン|あたた(かい)|あたたかい
+晩|6|バン|—|ゆうがた・よる`],
+ ["金","かねへん","#9AA3AB","h.4",`金|1|キン・コン|かね|かね・きん|w
+鉄|3|テツ|—|てつ
+銀|3|ギン|—|ぎん
+鏡|4|キョウ|かがみ|かがみ
+録|4|ロク|—|かきしるす
+銅|5|ドウ|—|どう（金属）
+針|6|シン|はり|はり
+鋼|6|コウ|はがね|はがね
+鉛|7|エン|なまり|なまり
+鈴|7|レイ・リン|すず|すず
+鍋|7|—|なべ|なべ`],
+ ["口","くちへん","#E53935","h.3~10",`口|1|コウ・ク|くち|くち|w
+右|1|ウ・ユウ|みぎ|みぎ|b.3,.45,1,1
+名|1|メイ・ミョウ|な|なまえ|a.5
+味|3|ミ|あじ|あじ
+唱|4|ショウ|とな(える)|となえる
+呼|6|コ|よ(ぶ)|よぶ
+吸|6|キュウ|す(う)|すう
+吹|7|スイ|ふ(く)|ふく
+叫|7|キョウ|さけ(ぶ)|さけぶ
+吐|7|ト|は(く)|はく
+咲|7|—|さ(く)|さく
+喫|7|キツ|—|のむ・すう
+噴|7|フン|ふ(く)|ふきだす`],
+ ["女","おんなへん","#D94F9E","h.4",`女|1|ジョ・ニョ|おんな|おんな|w
+妹|2|マイ|いもうと|いもうと
+姉|2|シ|あね|あね
+始|3|シ|はじ(める)|はじめる
+好|4|コウ|す(き)|すき・このむ
+媛|4|エン|ひめ|ひめ（愛媛）
+姓|7|セイ・ショウ|—|みょうじ
+婚|7|コン|—|けっこん
+娘|7|—|むすめ|むすめ
+嫁|7|カ|よめ|よめ
+妙|7|ミョウ|—|ふしぎ・すぐれている`],
+ ["子","こへん","#35A7D8","w",`子|1|シ・ス|こ|こども|w
+字|1|ジ|あざ|もじ|a.55
+学|1|ガク|まな(ぶ)|まなぶ|a.5`],
+ ["田","たへん","#7A8F2A","w",`田|1|デン|た|たんぼ|w
+町|1|チョウ|まち|まち|h.45
+男|1|ダン・ナン|おとこ|おとこ|k.5
+番|2|バン|—|じゅんばん|a.45`],
+ ["礻","しめすへん","#B23A48","h.35",`社|2|シャ|やしろ|やしろ・会社
+神|3|シン・ジン|かみ|かみさま
+祥|7|ショウ|—|めでたいこと・しるし`],
+ ["力","ちから","#D84315","w",`力|1|リョク・リキ|ちから|ちから|w
+加|4|カ|くわ(える)|くわえる|h.5
+助|3|ジョ|たす(ける)|たすける|r.45
+動|3|ドウ|うご(く)|うごく|r.45`],
+ ["阝","こざとへん","#6D8B74","h.33",`陽|3|ヨウ|—|たいよう・ひなた
+院|3|イン|—|たてもの・びょういん
+階|3|カイ|—|かいだん・…かい`],
+ ["風","かぜ","#5FA8A0","w",`風|2|フウ|かぜ|かぜ`],
+ ["癶","はつがしら","#8E6C8A","k.4",`登|3|トウ・ト|のぼ(る)|のぼる`],
+ ["一","いち","#3D5A80","w",`一|1|イチ|ひと(つ)|ひとつ|w
+三|1|サン|み(っつ)|みっつ|w
+上|1|ジョウ|うえ|うえ|a.25
+下|1|カ・ゲ|した|した|k.25
+七|1|シチ|なな|ななつ|w
+万|2|マン・バン|—|まん・とてもたくさん|w`],
+ ["大","だい","#6D4C9F","w",`大|1|ダイ・タイ|おお(きい)|おおきい|w
+天|1|テン|あま|そら|w
+太|2|タイ|ふと(い)|ふとい|w`],
+ ["十","じゅう","#5C6BC0","w",`十|1|ジュウ|とお|とお|w
+千|1|セン|ち|せん（数）|w
+午|2|ゴ|—|ひるの十二時|w
+南|2|ナン|みなみ|みなみ|k.3`],
+ ["八","はち","#B5651D","w",`八|1|ハチ|や(っつ)|やっつ|w
+六|1|ロク|む(っつ)|むっつ|a.45
+公|2|コウ|おおやけ|みんなの|k.45`],
+ ["王","おうへん","#D4A017","h.4",`王|1|オウ|—|おうさま|w
+玉|1|ギョク|たま|たま|w
+理|2|リ|—|すじみち・りか|h.4`],
+ ["土","つちへん","#A0522D","h.35",`土|1|ド・ト|つち|つち|w
+地|2|チ・ジ|—|じめん|h.35
+場|2|ジョウ|ば|ばしょ|h.35`],
+ ["雨","あめかんむり","#4FA3B8","k.45",`雨|1|ウ|あめ|あめ|w
+雪|2|セツ|ゆき|ゆき|k.45
+雲|2|ウン|くも|くも|k.45
+電|2|デン|—|でんき|k.45`],
+];
+const OJAMA_SRC=`乙|7|オツ|—|二番目
+了|7|リョウ|—|おわる
+丸|2|ガン|まる|まる
+久|5|キュウ|ひさ(しい)|ひさしい
+才|2|サイ|—|うまれつきの力
+丈|7|ジョウ|たけ|ながさ・じょうぶ`;
+// 語|よみ|意味
+const BWORD_SRC=`茶室|ちゃしつ|茶道をする部屋
+実話|じつわ|本当にあった話
+記録|きろく|書きのこすこと
+計算|けいさん|数をかぞえて答えを出すこと
+説明|せつめい|わかるように話すこと
+調節|ちょうせつ|ちょうどよくととのえること
+談笑|だんしょう|笑いながら話すこと
+筆記|ひっき|書きとること
+細流|さいりゅう|細い川の流れ
+結婚|けっこん|夫婦になること
+緑茶|りょくちゃ|緑色の日本茶
+持続|じぞく|長くつづくこと
+指定|してい|これと決めること
+寒波|かんぱ|はげしい寒さがやってくること
+通信|つうしん|知らせを伝えること
+送信|そうしん|データなどを送ること
+遊泳|ゆうえい|泳ぐこと
+返信|へんしん|返事を送ること
+時計|とけい|時刻をはかる道具
+暖流|だんりゅう|あたたかい海の流れ
+鉄橋|てっきょう|鉄でできた橋
+始終|しじゅう|始めから終わりまで・いつも
+体温|たいおん|体の温度
+作詩|さくし|詩をつくること
+苦笑|くしょう|にがわらい
+英語|えいご|イギリスやアメリカなどのことば
+林道|りんどう|林の中の道
+村道|そんどう|村の道
+温暖|おんだん|気候があたたかいこと
+決定|けってい|はっきり決めること
+流通|りゅうつう|品物が世の中に出回ること
+洗練|せんれん|あかぬけて上品になること
+油絵|あぶらえ|油絵の具でかいた絵
+何時|なんじ|何時ごろか
+作家|さっか|小説などを書く人
+寒暖|かんだん|寒さとあたたかさ
+定時|ていじ|決まった時刻
+宝箱|たからばこ|宝物を入れる箱
+運休|うんきゅう|電車やバスが運転を休むこと
+達筆|たっぴつ|字が上手なこと
+近海|きんかい|陸に近い海
+速記|そっき|すばやく書きとること
+等級|とうきゅう|ランク・段階
+晩婚|ばんこん|年をとってからの結婚
+時速|じそく|1時間に進むきょり
+暗記|あんき|そらでおぼえること
+銅線|どうせん|銅でできた線
+鉄道|てつどう|線路の上を走る乗り物
+針葉|しんよう|針のように細い葉
+喫茶|きっさ|お茶を飲むこと
+折紙|おりがみ|紙を折っていろいろな形を作る遊び
+給油|きゅうゆ|燃料を入れること
+紙箱|かみばこ|紙でできた箱
+訓練|くんれん|くり返し練習してきたえること
+男子|だんし|男の子
+女子|じょし|女の子
+大木|たいぼく|大きな木
+本日|ほんじつ|きょう
+早口|はやくち|話すのがはやいこと
+人口|じんこう|そこに住む人の数
+十字|じゅうじ|十の字の形
+王子|おうじ|王さまの男の子ども
+大人|おとな|一人前になった人
+日本|にほん|わたしたちの国
+一本|いっぽん|一つの細長いもの
+三日|みっか|月の三番目の日・三日間
+天下|てんか|世の中ぜんたい
+村人|むらびと|村に住む人
+休日|きゅうじつ|休みの日
+十人|じゅうにん|十の人
+大王|だいおう|王さまの中の王さま
+町村|ちょうそん|町と村
+男女|だんじょ|男と女
+名人|めいじん|とても上手な人
+上手|じょうず|うまいこと
+下手|へた|うまくないこと
+雨天|うてん|雨の日
+電池|でんち|電気をためるもの
+雨水|あまみず|雨の水
+竹林|ちくりん|竹の林
+水田|すいでん|水をはった田んぼ
+木星|もくせい|太陽系でいちばん大きい星
+金星|きんせい|明けの明星・よいの明星
+土星|どせい|輪のある星
+十日|とおか|月の十番目の日・十日間
+七日|なのか|月の七番目の日・七日間
+女王|じょおう|女の王さま
+手紙|てがみ|人に送る文
+南口|みなみぐち|南がわの出入り口
+大地|だいち|広い土地
+番地|ばんち|住所の番号
+名字|みょうじ|家の名前
+日記|にっき|毎日のできごとを書いたもの`;
+const DWORD_SRC=`花火|はなび|火薬で光や音を楽しむもの
+読書|どくしょ|本を読むこと
+電車|でんしゃ|電気で線路を走る乗り物
+学校|がっこう|勉強をするところ
+青空|あおぞら|晴れた青い空
+友達|ともだち|仲のよい人
+時間|じかん|時の長さ
+音楽|おんがく|音でつくる芸術
+天気|てんき|空のようす
+地図|ちず|土地のようすを表した図
+新聞|しんぶん|ニュースをのせた印刷物
+漢字|かんじ|中国から伝わった文字
+野菜|やさい|食べるために育てる草
+図書|としょ|本
+雪山|ゆきやま|雪がつもった山
+夕日|ゆうひ|夕方の太陽`;
+const IDIOM_SRC=`一石二鳥|いっせきにちょう|一つのことで二つの得をすること
+十人十色|じゅうにんといろ|考えや好みは人それぞれちがうこと
+一期一会|いちごいちえ|一生に一度の出会いを大切にすること
+温故知新|おんこちしん|昔のことを学んで新しい知識を得ること
+花鳥風月|かちょうふうげつ|自然の美しい景色
+以心伝心|いしんでんしん|言葉にしなくても心が通じ合うこと
+晴耕雨読|せいこううどく|晴れたら畑仕事、雨なら読書というのんびりした暮らし
+七転八起|しちてんはっき|何度失敗してもくじけず立ち上がること
+起承転結|きしょうてんけつ|物語や文章の組み立て方
+自画自賛|じがじさん|自分で自分をほめること
+千差万別|せんさばんべつ|いろいろなちがいがあること
+臨機応変|りんきおうへん|その場に合わせてうまく対応すること
+一心同体|いっしんどうたい|心も体も一つのように強く結びつくこと
+試行錯誤|しこうさくご|失敗をくり返しながら正しいやり方を見つけること`;
+
+const KDATA={};
+// region codes (where the radical sits, as fractions of the character box):
+// w=whole, hX=left(へん), kX=top(かんむり), aX=bottom(あし), nX,Y=にょう, bU0,V0,U1,V1=box; "~T"=extra touch tolerance(px)
+function parseRegion(code){
+  const [c,t]=code.split("~"),ty=c[0],v=c.slice(1).split(",").map(Number);
+  const boxes=ty==="w"?[[0,0,1,1]]:ty==="h"?[[0,0,v[0],1]]:ty==="k"?[[0,0,1,v[0]]]:ty==="a"?[[0,1-v[0],1,1]]:
+    ty==="n"?[[0,0,v[0],1],[0,1-v[1],1,1]]:ty==="r"?[[1-v[0],0,1,1]]:[v];
+  return{code,boxes,tol:t?+t:4};
+}
+const parseK=(line,rad,grp)=>{const [k,g,on,kun,mean,reg]=line.split("|");
+  KDATA[k]={k,g:+g,on,kun,mean,rad,grp,reg:grp?parseRegion(reg||grp.region):null};return k};
+const RADICALS=RAD_SRC.map(([sym,name,color,region,src])=>{
+  const grp={sym,name,color,region};grp.all=src.split("\n").map(l=>parseK(l,name+"（"+sym+"）",grp));return grp});
+const OJAMA=OJAMA_SRC.split("\n").map(l=>parseK(l,null));
+const WORDS={};
+const parseW=(src,type)=>src.split("\n").map(l=>{const [w,yomi,mean]=l.split("|");WORDS[w]={w,yomi,mean,type};return w});
+const BUSYU_JUKUGO=parseW(BWORD_SRC,"juku");
+const DOSU_ONLY=parseW(DWORD_SRC,"juku");
+const DOSU_JUKUGO=[...DOSU_ONLY,...BUSYU_JUKUGO];
+const IDIOMS=parseW(IDIOM_SRC,"idiom");
+const ALL_KANJI=[...RADICALS.flatMap(r=>r.all),...OJAMA];
+const GRADES=[{g:1,name:"〜小1"},{g:2,name:"〜小2"},{g:4,name:"〜小4"},{g:6,name:"〜小6"},{g:7,name:"ぜんぶ"}];
+const gradeName=g=>g>=7?"中学":`小${g}`;
+// reading to show and speak: kun-yomi if there is one, otherwise on-yomi, in hiragana
+const kata2hira=t=>t.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+const YOMI={一:"いち",三:"さん",七:"しち",八:"はち",十:"じゅう",六:"ろく",千:"せん",万:"まん",校:"こう",学:"がく",上:"うえ",下:"した",
+  天:"てん",公:"こう",午:"ご",王:"おう",字:"じ",番:"ばん",電:"でん",地:"ち",理:"り",本:"ほん",名:"な",陽:"よう",祥:"しょう",加:"くわえる",社:"しゃ",力:"ちから",九:"きゅう",才:"さい"};
+function readingOf(k){const d=KDATA[k];if(!d)return"";if(YOMI[k])return YOMI[k];const r=d.kun!=="—"?d.kun:d.on;return kata2hira(r.split("・")[0].replace(/[()]/g,""))}
+
+// ================= コマバトル =================
+const $=id=>document.getElementById(id);
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let COL={};function readCols(){COL={ink:css("--ink"),muted:css("--muted"),field:css("--field"),line:css("--line"),shu:css("--shu"),ai:css("--ai"),gold:css("--gold"),d1:css("--dish1"),d2:css("--dish2")}}
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",readCols);
+
+// five elements: each beats the next one in the cycle
+const ELEM={
+  ki:{name:"き",icon:"🌳",color:"#3FA34D"},tsuchi:{name:"つち",icon:"⛰️",color:"#A0522D"},mizu:{name:"みず",icon:"💧",color:"#2F80D0"},
+  hi:{name:"ひ",icon:"🔥",color:"#E8590C"},kin:{name:"きん",icon:"⚙️",color:"#7E8B98"},mu:{name:"むぞくせい",icon:"⚪",color:"#8A7F70"}};
+const CYCLE=["ki","tsuchi","mizu","hi","kin"];
+const RAD_ELEM={"木":"ki","艹":"ki","⺮":"ki","日":"hi","土":"tsuchi","田":"tsuchi","金":"kin","王":"kin","氵":"mizu","雨":"mizu","阝":"tsuchi","風":"ki"};
+// kanji the player knows well: one of them is always among the four cards, whatever the grade range
+const FAV=["太","祥","実","加","森","澤","風","登","千","陽"];
+const elemOf=k=>{const g=KDATA[k]&&KDATA[k].grp;return g&&RAD_ELEM[g.sym]||"mu"};
+function adv(a,b){ // multiplier when element a hits element b
+  const i=CYCLE.indexOf(a),j=CYCLE.indexOf(b);if(i<0||j<0)return 1;
+  if((i+1)%5===j)return 1.5;if((j+1)%5===i)return .75;return 1;
+}
+const beats=e=>{const i=CYCLE.indexOf(e);return i<0?null:CYCLE[(i+1)%5]};
+const beatenBy=e=>{const i=CYCLE.indexOf(e);return i<0?null:CYCLE[(i+4)%5]};
+
+// weight from how much ink the character has
+const inkCache={};
+const off=document.createElement("canvas");off.width=off.height=64;const octx=off.getContext("2d",{willReadFrequently:true});
+function inkOf(k){
+  if(inkCache[k]!=null)return inkCache[k];
+  octx.clearRect(0,0,64,64);octx.font=`900 60px "Zen Maru Gothic",sans-serif`;octx.textAlign="center";octx.textBaseline="middle";octx.fillText(k,32,33);
+  const d=octx.getImageData(0,0,64,64).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i]>110)n++;
+  return inkCache[k]=n/(64*64);
+}
+// weight is ranked against every kanji, so the lightest is 0.8 and the heaviest 1.8 whatever the font
+let inkSorted=null;
+const BAL={speed:[1.15,.4],stam:[1.1,.1],mass:[.8,.8],mrExp:.5}; // tuned by simulating heavy vs light matches to about 50:50
+function statsOf(k){
+  if(!inkSorted)inkSorted=Object.keys(KDATA).map(inkOf).sort((a,b)=>a-b);
+  const ink=inkOf(k);let i=0;while(i<inkSorted.length&&inkSorted[i]<ink)i++;
+  const w=.8+i/(inkSorted.length-1);
+  // heavy kanji push harder and are hard to move; light kanji launch faster and keep spinning longer
+  const t=w-.8,speed=BAL.speed[0]-BAL.speed[1]*t,stamina=BAL.stam[0]-BAL.stam[1]*t,mass=(BAL.mass[0]+BAL.mass[1]*t)*4;
+  return{w,speed,stamina,mass,stars:{omosa:Math.round(t*4)+1,hayasa:Math.round((1-t)*4)+1,nebari:Math.round(1-t)+3}};
+}
+const starStr=n=>"★".repeat(n)+"☆".repeat(5-n);
+
+// ================= sound & voice =================
+let actx=null,sfxOn=store("km-sfx")!=="0",voiceOn=store("bd-voice")!=="0";
+function ac(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(actx.state==="suspended")actx.resume();return actx}
+function tone(f,dur,type="triangle",vol=.12,when=0,slide=0){
+  if(!sfxOn||!ac())return;const t=actx.currentTime+when,o=actx.createOscillator(),g=actx.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+dur+.05);
+}
+function noise(dur,vol,freq){
+  if(!sfxOn||!ac())return;const n=Math.floor(actx.sampleRate*dur),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();s.buffer=buf;f.type="bandpass";f.frequency.value=freq;g.gain.value=vol;
+  s.connect(f);f.connect(g);g.connect(actx.destination);s.start();
+}
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+const SFX={
+  clash(v){noise(.12,Math.min(.6,.15+v*.05),2400);tone(900+Math.random()*300,.08,"square",.04)},
+  launch(){noise(.4,.25,700);tone(300,.35,"sawtooth",.04,0,500)},
+  count(){tone(NOTE(76),.12,"square",.06)},go(){tone(NOTE(88),.3,"square",.08)},
+  special(){tone(200,.3,"sawtooth",.08,0,900);noise(.3,.3,1200)},
+  out(){tone(NOTE(60),.4,"triangle",.12,0,-200)},
+  ok(){[0,4,7].forEach((s,i)=>tone(NOTE(76+s),.15,"triangle",.1,i*.06))},ng(){tone(NOTE(60),.25,"square",.06)},
+  win(){[0,4,7,12,7,12].forEach((s,i)=>tone(NOTE(72+s),.2,"square",.06,i*.11))},
+};
+const sfx=(n,...a)=>{try{SFX[n](...a)}catch(e){}};
+let jaVoice=null;
+function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));jaVoice=vs.find(v=>v.localService)||vs[0]||null}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(t){if(!voiceOn||!t||!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+function syncBtns(){$("sfxBtn").setAttribute("aria-pressed",sfxOn);$("voiceBtn").setAttribute("aria-pressed",voiceOn)}
+$("sfxBtn").onclick=()=>{sfxOn=!sfxOn;store("km-sfx",sfxOn?"1":"0");syncBtns()};
+$("voiceBtn").onclick=()=>{voiceOn=!voiceOn;store("bd-voice",voiceOn?"1":"0");syncBtns()};
+// in-page confirmation (browser dialogs are blocked inside some viewers, such as the Claude page)
+let asking=false;
+function ask(msg,yes){asking=true;$("askMsg").textContent=msg;$("ask").hidden=false;
+  $("askYes").onclick=()=>{asking=false;$("ask").hidden=true;yes()};
+  $("askNo").onclick=()=>{asking=false;$("ask").hidden=true}}
+function goHomePage(){location.href="index.html"}
+$("backBtn").onclick=()=>{if(phase!=="menu"&&phase!=="end")ask("ゲームをやめてホームにもどりますか？",goHomePage);else goHomePage()};
+$("menuHome").onclick=goHomePage;
+
+// ================= world =================
+const WW=360,WH=600,CX=180,CY=300,TR=26,RIM=6.6,S0=58;
+let R=158;
+const START={A:{x:CX,y:CY+100},B:{x:CX,y:CY-100}};
+const FIELDS=[
+  {id:"normal",name:"ふつう",icon:"⭕",R:158,desc:"まるい土俵"},
+  {id:"gap",name:"すきま",icon:"◔",R:158,gaps:true,desc:"ふちが2か所ない"},
+  {id:"pillar",name:"はしら",icon:"🗿",R:158,pillars:true,desc:"下から棒が出てくる"},
+  {id:"swirl",name:"うずまき",icon:"🌀",R:158,swirl:true,desc:"床がぐるぐる流れる"},
+  {id:"small",name:"せまい",icon:"🔸",R:122,desc:"小さな土俵"},
+  {id:"shrink",name:"ちぢむ",icon:"⏬",R:158,shrink:true,desc:"だんだん小さくなる"},
+  {id:"ice",name:"こおり",icon:"🧊",R:158,ice:true,desc:"つるつるすべる"},
+  {id:"spring",name:"ばね",icon:"〰️",R:158,spring:true,desc:"ふちで強くはねかえる"},
+  {id:"bar",name:"まわるぼう",icon:"🔄",R:158,bar:true,desc:"まん中で棒が回る"},
+  {id:"random",name:"おまかせ",icon:"🎲",desc:"毎ラウンドかわる"},
+];
+let fieldSel=store("km-field")||"normal",FIELD=FIELDS[0],gaps=[],pillars=[],pillarT=0,bar=null,barAng=0;
+const BAR_W=.014; // rotating bar speed (radians per physics step)
+function setupField(){
+  const real=FIELDS.filter(f=>f.id!=="random");
+  FIELD=fieldSel==="random"?real[Math.floor(Math.random()*real.length)]:FIELDS.find(f=>f.id===fieldSel)||FIELDS[0];
+  R=FIELD.R;START.A.y=CY+R*.63;START.B.y=CY-R*.63;
+  gaps=[];if(FIELD.gaps){const a=Math.random()*Math.PI*2;gaps=[{a,w:.6},{a:a+Math.PI+(Math.random()-.5),w:.6}]}
+  pillars=[];pillarT=1.5;
+}
+const inGap=ang=>gaps.some(g=>{const d=Math.abs(((ang-g.a)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);return d<g.w/2});
+const cv=$("cv"),ctx=cv.getContext("2d"),stage=$("stage");
+let scale=1,dpr=1;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);const r=stage.getBoundingClientRect();scale=Math.min(r.width/WW,r.height/WH);
+  cv.style.width=WW*scale+"px";cv.style.height=WH*scale+"px";cv.width=Math.round(WW*scale*dpr);cv.height=Math.round(WH*scale*dpr)}
+const toWorld=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*WW,y:(e.clientY-r.top)/r.height*WH}};
+
+const {Engine,Bodies,Composite,Events,Body}=Matter;
+// the kanji's own strokes are the collision shape, so strokes catch on each other
+const N=12,RES=96,FR=.96,shapeCache={};
+const soff=document.createElement("canvas");soff.width=soff.height=RES;const sctx=soff.getContext("2d",{willReadFrequently:true});
+function shapeFor(k){
+  if(shapeCache[k])return shapeCache[k];
+  sctx.clearRect(0,0,RES,RES);sctx.font=`900 ${RES*FR}px "Zen Maru Gothic",sans-serif`;sctx.textAlign="center";sctx.textBaseline="middle";sctx.fillStyle="#000";sctx.fillText(k,RES/2,RES/2);
+  const px=sctx.getImageData(0,0,RES,RES).data,cs=RES/N,grid=[];
+  for(let gy=0;gy<N;gy++){const row=[];for(let gx=0;gx<N;gx++){let ink=0,tot=0;
+    for(let y=Math.floor(gy*cs);y<Math.floor((gy+1)*cs);y++)for(let x=Math.floor(gx*cs);x<Math.floor((gx+1)*cs);x++){tot++;if(px[(y*RES+x)*4+3]>110)ink++}
+    row.push(ink/tot>.2)}grid.push(row)}
+  const used=grid.map(r=>r.map(()=>false)),rects=[];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(!grid[y][x]||used[y][x])continue;
+    let w=1;while(x+w<N&&grid[y][x+w]&&!used[y][x+w])w++;let h=1;
+    outer:while(y+h<N){for(let i=0;i<w;i++)if(!grid[y+h][x+i]||used[y+h][x+i])break outer;h++}
+    for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)used[yy][xx]=true;rects.push({x,y,w,h})}
+  if(!rects.length)rects.push({x:4,y:4,w:4,h:4});
+  const c=S0/N;return shapeCache[k]=rects.map(r=>({x:(r.x+r.w/2)*c-S0/2,y:(r.y+r.h/2)*c-S0/2,w:r.w*c,h:r.h*c}));
+}
+function glyphBody(k,x,y,label){
+  const parts=shapeFor(k).map(r=>Bodies.rectangle(x+r.x,y+r.y,r.w,r.h,{density:.002}));
+  const b=Body.create({parts,restitution:.6,friction:.08,frictionAir:.012,label});
+  b.off={x:x-b.position.x,y:y-b.position.y};return b;
+}
+let mode=store("km-mode")==="vs"?"vs":"cpu",lv=+store("km-lv")||2,grade=+store("bd-grade")||2;
+if(grade>7)grade=7;
+const GR=[{g:1,name:"〜小1"},{g:2,name:"〜小2"},{g:4,name:"〜小4"},{g:7,name:"ぜんぶ"}];
+const P={A:{},B:{}};
+let engine=null,phase="menu",wins={A:0,B:0},round=0,tops={},aim={A:null,B:null},drag=null,count=0,battleT=0,
+    sparks=[],banners=[],clock=0,last=0,shakeFx=0,roundOver=false;
+const isCPU=who=>mode==="cpu"&&who==="B";
+const pool=()=>Object.keys(KDATA).filter(k=>KDATA[k].grp&&KDATA[k].g<=grade);
+
+// ================= menu =================
+function seg(id,val,items,set){const el=$(id);el.innerHTML="";for(const [v,label] of items){const b=document.createElement("button");b.innerHTML=label;b.setAttribute("aria-pressed",String(v)===String(val));b.onclick=()=>{set(v);buildMenu()};el.appendChild(b)}}
+function buildMenu(){
+  seg("modeSeg",mode,[["cpu","ひとりで<small>コンピューターと</small>"],["vs","ふたりで<small>1台で交互に</small>"]],v=>{mode=v;store("km-mode",v)});
+  seg("lvSeg",lv,[[1,"よわい"],[2,"ふつう"],[3,"つよい"]],v=>{lv=+v;store("km-lv",v)});
+  seg("grSeg",grade,GR.map(g=>[g.g,g.name]),v=>{grade=+v;store("bd-grade",v)});
+  seg("fieldSeg",fieldSel,FIELDS.map(f=>[f.id,`${f.icon} ${f.name}<small>${f.desc}</small>`]),v=>{fieldSel=v;store("km-field",v)});
+  $("lvBox").hidden=mode!=="cpu";
+}
+function show(id,flip){for(const o of ["menu","pick","quiz","result"])$(o).hidden=o!==id;if(id)$(id).classList.toggle("flip",!!flip)}
+
+// ================= pick =================
+let pickChoices=[],pickSel=null,pickWho="A";
+function drawPick(who){
+  pickWho=who;pickSel=null;$("pickOk").disabled=true;
+  const fav=FAV.filter(k=>KDATA[k]),f0=fav[Math.floor(Math.random()*fav.length)];
+  const ks=pool().filter(k=>k!==f0).sort(()=>Math.random()-.5),out=f0?[f0]:[],used=new Set(out.map(elemOf));
+  for(const k of ks){const e=elemOf(k);if(out.length<4&&(!used.has(e)||out.length>=3)){out.push(k);used.add(e)}}
+  pickChoices=out;
+  $("pickWho").textContent=who==="A"?(mode==="cpu"?"あなたの番":"Aの番"):"Bの番";$("pickWho").className="who "+who.toLowerCase();
+  const box=$("cards");box.innerHTML="";
+  for(const k of out){const e=ELEM[elemOf(k)],s=statsOf(k).stars,b=document.createElement("button");b.className="card";b.style.setProperty("--ec",e.color);
+    const st=beats(elemOf(k)),wk=beatenBy(elemOf(k));
+    b.innerHTML=`<span class="k">${k}</span><span class="y">${readingOf(k)}</span><span class="el">${e.icon} ${e.name}</span>
+      <span class="st">おもさ <b>${starStr(s.omosa)}</b><br>はやさ <b>${starStr(s.hayasa)}</b><br>ねばり <b>${starStr(s.nebari)}</b><br>${st?`つよい：${ELEM[st].icon}${ELEM[st].name}　よわい：${ELEM[wk].icon}${ELEM[wk].name}`:"⚪ にがても とくいも なし"}</span>`;
+    b.onclick=()=>{pickSel=k;say(readingOf(k));[...box.children].forEach(c=>c.setAttribute("aria-pressed",c===b));$("pickOk").disabled=false};
+    box.appendChild(b)}
+  show("pick",mode==="vs"&&who==="B");
+}
+$("pickOk").onclick=()=>{
+  P[pickWho].k=pickSel;
+  if(pickWho==="A"){if(mode==="cpu"){cpuPick();startRound()}else drawPick("B")}else startRound();
+};
+function cpuPick(){
+  drawPickSilent();
+  let k=pickChoices[Math.floor(Math.random()*pickChoices.length)];
+  if(lv>=3){const ea=elemOf(P.A.k),good=pickChoices.find(c=>adv(elemOf(c),ea)>1);if(good)k=good}
+  P.B.k=k;
+}
+function drawPickSilent(){const ks=pool().sort(()=>Math.random()-.5);pickChoices=ks.slice(0,4)}
+
+// ================= quiz (each round, a random kanji) =================
+let quizWho="A";
+function drawQuiz(who){
+  quizWho=who;
+  const all=pool(),k=all[Math.floor(Math.random()*all.length)],ans=readingOf(k);
+  const wrong=[...new Set(all.map(readingOf))].filter(r=>r&&r!==ans).sort(()=>Math.random()-.5).slice(0,2);
+  const opts=[ans,...wrong].sort(()=>Math.random()-.5);
+  $("quizWho").textContent=who==="A"?(mode==="cpu"?"あなた":"A"):"B";$("quizWho").className="who "+who.toLowerCase();
+  $("quizK").textContent=k;$("quizMsg").textContent="";
+  const box=$("choices");box.innerHTML="";
+  for(const o of opts){const b=document.createElement("button");b.textContent=o;
+    b.onclick=()=>{if(box.dataset.done)return;box.dataset.done=1;const ok=o===ans;
+      b.classList.add(ok?"ok":"ng");if(!ok)[...box.children].find(c=>c.textContent===ans).classList.add("ok");
+      P[who].bonus=ok;sfx(ok?"ok":"ng");say(ans);
+      $("quizMsg").textContent=ok?"せいかい！回転パワーアップ！":`ざんねん、「${ans}」でした`;
+      setTimeout(afterQuiz,1300)};
+    box.appendChild(b)}
+  delete box.dataset.done;
+  show("quiz",mode==="vs"&&who==="B");
+}
+function afterQuiz(){
+  if(quizWho==="A"&&mode==="vs"){drawQuiz("B");return}
+  if(mode==="cpu")P.B.bonus=Math.random()<[0,.4,.65,.9][lv];
+  show(null);beginAim("A");
+}
+
+// ================= rounds =================
+function startRound(){
+  round++;roundOver=false;phase="quiz";setupField();
+  engine=Engine.create();engine.gravity.y=0;
+  Events.on(engine,"collisionStart",onHit);
+  tops={};
+  for(const who of ["A","B"]){
+    const k=P[who].k,s=statsOf(k),b=glyphBody(k,START[who].x,START[who].y,who);
+    Body.setMass(b,s.mass);if(FIELD.ice)b.frictionAir=.003;Composite.add(engine.world,b);
+    tops[who]={who,k,body:b,s,elem:elemOf(k),spin:0,angle:Math.random()*6,out:false,stopped:false,used:false,fall:0};
+  }
+  bar=null;barAng=0;
+  if(FIELD.bar){bar=Bodies.rectangle(CX,CY,R*1.45,12,{isStatic:true,label:"bar",restitution:.8,chamfer:{radius:6}});Composite.add(engine.world,bar)}
+  aim={A:null,B:null};
+  drawQuiz("A");
+}
+function beginAim(who){
+  phase="aim"+who;drag=null;
+  if(isCPU(who)){cpuAim();return}
+  banner(who==="A"?(mode==="cpu"?"ねらいを決めよう":"Aがねらう"):"Bがねらう",who==="A"?COL.shu:COL.ai,who==="B"&&mode==="vs");
+  $("confirm").hidden=true;$("confirm").classList.toggle("topside",who==="B");
+}
+function cpuAim(){
+  const me=START.B,acc=[0,.9,.45,.18][lv],toward=Math.atan2(START.A.y-me.y,START.A.x-me.x)+(Math.random()-.5)*2*acc;
+  const pw=Math.min(1,[0,.45,.65,.8][lv]+(Math.random()-.5)*.3);
+  aim.B={a:toward,p:pw};startCount();
+}
+$("confirm").onclick=()=>{
+  const who=phase==="aimA"?"A":"B";if(!aim[who])return;
+  $("confirm").hidden=true;
+  if(who==="A"&&mode==="vs")beginAim("B");else if(who==="A")beginAim("B");else startCount();
+};
+function startCount(){phase="count";count=3.2;$("confirm").hidden=true}
+function launch(){
+  phase="battle";battleT=0;sfx("launch");
+  for(const who of ["A","B"]){
+    const t=tops[who],a=aim[who],sp=(3+4*a.p)*t.s.speed;
+    Body.setVelocity(t.body,{x:Math.cos(a.a)*sp,y:Math.sin(a.a)*sp});
+    t.spin=(70+45*a.p)*(P[who].bonus?1.2:1);t.max=t.spin;Body.setAngularVelocity(t.body,(who==="A"?1:-1)*.3);
+  }
+  $("spA").hidden=false;$("spA").disabled=false;
+  $("spB").hidden=false;$("spB").disabled=false;$("spB").classList.toggle("cpu",mode==="cpu");
+}
+function special(who){
+  const t=tops[who],o=tops[who==="A"?"B":"A"];if(phase!=="battle"||t.used||t.out||t.stopped)return;
+  t.used=true;$("sp"+who).disabled=true;sfx("special");
+  const dx=o.body.position.x-t.body.position.x,dy=o.body.position.y-t.body.position.y,d=Math.hypot(dx,dy)||1;
+  Body.setVelocity(t.body,{x:dx/d*9,y:dy/d*9});t.spin=Math.max(5,t.spin-8);t.dash=.5;
+  banner("ひっさつ たいあたり！",who==="A"?COL.shu:COL.ai,who==="B"&&mode==="vs");
+}
+$("spA").addEventListener("pointerdown",e=>{e.preventDefault();special("A")});
+$("spB").addEventListener("pointerdown",e=>{e.preventDefault();special("B")});
+
+function onHit(ev){
+  for(const p of ev.pairs){
+    const a=p.bodyA.parent,b=p.bodyB.parent;
+    if(bar&&(a===bar||b===bar)){const t=tops[(a===bar?b:a).label];if(t){
+      const rx=t.body.position.x-CX,ry=t.body.position.y-CY;
+      Body.setVelocity(t.body,{x:t.body.velocity.x-ry*BAR_W*2.6,y:t.body.velocity.y+rx*BAR_W*2.6});t.spin-=2;sfx("clash",2)}continue}
+    if(!tops[a.label]||!tops[b.label]||a===b)continue;
+    if(battleT-lastClash<.12)continue;lastClash=battleT;
+    const A=tops[a.label],B=tops[b.label],n=p.collision.normal;
+    const rv=Math.abs((a.velocity.x-b.velocity.x)*n.x+(a.velocity.y-b.velocity.y)*n.y),imp=Math.max(1,rv);
+    for(const [X,Y,sign] of [[A,B,-1],[B,A,1]]){
+      const f=adv(Y.elem,X.elem),mr=Math.pow(Y.s.w/X.s.w,BAL.mrExp),sr=Math.pow((Y.spin+20)/(X.spin+20),.5),dash=Y.dash>0?1.6:1;
+      X.spin-=imp*1.0*f*mr*dash+.5;
+      const push=Math.min(4.5,imp*.3*f*sr*mr*dash);
+      // push X away from Y along the contact normal
+      const dir=X.body===a?-1:1;
+      Body.setVelocity(X.body,{x:X.body.velocity.x+n.x*push*dir,y:X.body.velocity.y+n.y*push*dir});
+      if(f>1)X.hitAdv=.5;
+    }
+    const mx=(a.position.x+b.position.x)/2,my=(a.position.y+b.position.y)/2;
+    for(let i=0;i<14;i++){const an=Math.random()*Math.PI*2,s=60+Math.random()*200;sparks.push({x:mx,y:my,vx:Math.cos(an)*s,vy:Math.sin(an)*s,life:.4})}
+    sfx("clash",imp);shakeFx=Math.min(10,imp*1.2);if(navigator.vibrate)navigator.vibrate(15);
+  }
+}
+const STEP=1000/60;let accT=0,lastClash=-1;
+function physics(dt){
+  accT+=dt*1000;
+  while(accT>=STEP){accT-=STEP;
+    for(const t of Object.values(tops)){
+      if(t.out||t.stopped)continue;
+      const b=t.body,dx=CX-b.position.x,dy=CY-b.position.y,d=Math.hypot(dx,dy)||1,sr=Math.max(0,t.spin)/100;
+      // bowl slope pulls toward the centre; spin makes the top drift round the dish
+      let vx=b.velocity.x+dx*.0011,vy=b.velocity.y+dy*.0011;
+      if(d>12){vx+=(-dy/d)*.045*sr*(t.who==="A"?1:-1);vy+=(dx/d)*.045*sr*(t.who==="A"?1:-1)}
+      if(FIELD.swirl&&d>8){vx+=(-dy/d)*.07;vy+=(dx/d)*.07}
+      // spin motor: keeps the kanji turning while it still has spin
+      const target=(t.who==="A"?1:-1)*(.04+sr*.3);Body.setAngularVelocity(b,b.angularVelocity+(target-b.angularVelocity)*.06);
+      // the dish has a raised rim: slow tops bounce back, only a hard hit flies over it
+      const nx=-dx/d,ny=-dy/d,vr=vx*nx+vy*ny;
+      const rimMax=FIELD.spring?9.5:RIM,kick=FIELD.spring?2.5:1.7;
+      if(d>R-TR*.7&&vr>0&&vr<rimMax&&!inGap(Math.atan2(-dy,-dx))){vx-=kick*vr*nx;vy-=kick*vr*ny;t.rim=.25;if(FIELD.spring&&vr>1.5)sfx("count")}
+      Body.setVelocity(b,{x:vx,y:vy});
+    }
+    if(bar){barAng+=BAR_W;Body.setAngle(bar,barAng)}
+    Engine.update(engine,STEP);
+  }
+}
+function battle(dt){
+  battleT+=dt;
+  if(FIELD.shrink)R=Math.max(92,FIELD.R-Math.max(0,battleT-2)*4.5);
+  physics(dt);
+  for(const t of Object.values(tops)){
+    if(t.dash>0)t.dash-=dt;if(t.hitAdv>0)t.hitAdv-=dt;
+    if(t.out||t.stopped){t.fall+=dt;continue}
+    t.spin-=dt*(4.2/t.s.stamina);
+    t.angle=t.body.angle;
+    const d=Math.hypot(t.body.position.x-CX,t.body.position.y-CY);
+    if(d>R+TR*.3){t.out=true;sfx("out");Body.setVelocity(t.body,{x:t.body.velocity.x*.3,y:t.body.velocity.y*.3})}
+    else if(t.spin<=0){t.spin=0;t.stopped=true;sfx("out");Body.setVelocity(t.body,{x:0,y:0})}
+  }
+  if(FIELD.pillars)updatePillars(dt);
+  // the computer uses its special when it lines up
+  if(mode==="cpu"&&!tops.B.used&&lv>=2&&battleT>1.2){
+    const d=Math.hypot(tops.A.body.position.x-tops.B.body.position.x,tops.A.body.position.y-tops.B.body.position.y);
+    if(d<110&&Math.random()<dt*(lv===3?2:.8))special("B");
+  }
+  if(!roundOver){
+    const A=tops.A,B=tops.B,aDown=A.out||A.stopped,bDown=B.out||B.stopped;
+    if(aDown||bDown||battleT>40){
+      let w=null;
+      if(aDown&&!bDown)w="B";else if(bDown&&!aDown)w="A";else if(battleT>40&&!aDown&&!bDown)w=A.spin>B.spin?"A":B.spin>A.spin?"B":null;
+      endRound(w,aDown&&bDown?"draw":(A.out||B.out)?"out":battleT>40?"time":"stop");
+    }
+  }
+}
+function updatePillars(dt){
+  pillarT-=dt;
+  if(pillarT<=0&&pillars.length<3){
+    pillarT=1.6+Math.random()*1.4;
+    for(let tries=0;tries<20;tries++){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*R*.72,x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;
+      if(Object.values(tops).every(t=>Math.hypot(t.body.position.x-x,t.body.position.y-y)>70)){pillars.push({x,y,st:"warn",t:1});break}}
+  }
+  for(const p of pillars){
+    p.t-=dt;
+    if(p.st==="warn"&&p.t<=0){
+      if(Object.values(tops).some(t=>Math.hypot(t.body.position.x-p.x,t.body.position.y-p.y)<34)){p.t=.2;continue} // wait until it is clear
+      p.st="up";p.t=3.5;p.body=Bodies.circle(p.x,p.y,13,{isStatic:true,restitution:.9,label:"pillar"});Composite.add(engine.world,p.body);sfx("count");
+    }else if(p.st==="up"&&p.t<=0){p.st="gone";Composite.remove(engine.world,p.body)}
+  }
+  pillars=pillars.filter(p=>p.st!=="gone");
+}
+function endRound(w,why){
+  roundOver=true;$("spA").hidden=true;$("spB").hidden=true;
+  const name=x=>x==="A"?(mode==="cpu"?"あなた":"A"):(mode==="cpu"?"コンピューター":"B");
+  if(w){wins[w]++;banner(`${name(w)}の勝ち！`,w==="A"?COL.shu:COL.ai,w==="B"&&mode==="vs");
+    const l=w==="A"?"B":"A";
+    setTimeout(()=>banner(why==="out"?`${tops[l].k} はじき出し！`:why==="time"?"回転の多いほうの勝ち":`${tops[l].k} がとまった`,COL.ink),900)}
+  else banner("ひきわけ！",COL.ink);
+  setTimeout(()=>{
+    if(wins.A>=2||wins.B>=2)matchEnd();else startRound();
+  },2600);
+}
+function matchEnd(){
+  phase="end";const w=wins.A>wins.B?"A":"B";sfx("win");
+  const winK=tops[w].k;
+  $("resTitle").textContent=mode==="cpu"?(w==="A"?"あなたの勝ち！":"コンピューターの勝ち"):`${w}の勝ち！`;
+  $("resDetail").innerHTML=`${wins.A} － ${wins.B}<br>勝ったコマ「${winK}」（${readingOf(winK)}）<br><small>${KDATA[winK].mean}</small>`;
+  say(readingOf(winK));
+  if(mode==="cpu"&&w==="A"){const k="km-wins-"+lv;store(k,(+store(k)||0)+1)}
+  show("result",mode==="vs"&&w==="B");
+}
+function newMatch(){wins={A:0,B:0};round=0;P.A={};P.B={};drawPick("A")}
+$("startBtn").onclick=async()=>{ac();if(voiceOn)say(" ");
+  try{await Promise.race([document.fonts.load(`900 40px "Zen Maru Gothic"`,Object.keys(KDATA).join("")),new Promise(r=>setTimeout(r,3000))])}catch(e){}
+  newMatch()};
+$("againBtn").onclick=newMatch;
+$("menuBtn").onclick=()=>{engine=null;phase="menu";buildMenu();show("menu")};
+
+// ================= aiming input =================
+cv.addEventListener("pointerdown",e=>{
+  const who=phase==="aimA"?"A":phase==="aimB"?"B":null;if(!who||isCPU(who))return;
+  const p=toWorld(e);if(mode==="vs"&&(who==="A"?p.y<CY:p.y>CY))return; // each player uses their own half
+  drag={who,x:p.x,y:p.y,cx:p.x,cy:p.y};cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove",e=>{if(!drag)return;const p=toWorld(e);drag.cx=p.x;drag.cy=p.y;
+  const dx=drag.x-p.x,dy=drag.y-p.y,l=Math.hypot(dx,dy);if(l>12)aim[drag.who]={a:Math.atan2(dy,dx),p:Math.min(1,l/120)}});
+cv.addEventListener("pointerup",()=>{if(!drag)return;const who=drag.who;drag=null;if(aim[who])$("confirm").hidden=false});
+
+// ================= drawing =================
+function banner(text,color,flip){banners.push({text,color,flip,t:0})}
+function drawTop(t){
+  const b=t.body,x=b.position.x,y=b.position.y,e=ELEM[t.elem];
+  const fall=Math.min(1,t.fall/.8),sc=t.out?1-fall*.5:1,alpha=t.out?1-fall*.7:1;
+  const col=t.who==="A"?COL.shu:COL.ai,av=b.angularVelocity||0;
+  ctx.font=`900 ${S0*FR}px "Zen Maru Gothic",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+  const glyph=(ang,al)=>{ctx.save();ctx.translate(x,y);ctx.globalAlpha=alpha*al;ctx.scale(sc,sc);ctx.rotate(ang);ctx.translate(b.off.x,b.off.y);
+    ctx.fillStyle=col;ctx.fillText(t.k,0,0);ctx.restore()};
+  // shadow, then afterimages that show how fast it spins
+  ctx.save();ctx.translate(x+3,y+5);ctx.rotate(t.angle);ctx.translate(b.off.x,b.off.y);ctx.globalAlpha=.13*alpha;ctx.fillStyle="#000";ctx.fillText(t.k,0,0);ctx.restore();
+  if(phase==="battle"&&!t.stopped&&!t.out){glyph(t.angle-av*2.4,.14);glyph(t.angle-av*1.2,.25)}
+  glyph(t.angle,1);
+  // element badge stays upright above the kanji
+  ctx.globalAlpha=alpha;ctx.font=`13px sans-serif`;ctx.fillText(e.icon,x,y-S0*.62);ctx.globalAlpha=1;
+  // spin gauge
+  // small spin bar (no ring around the kanji)
+  if(phase==="battle"&&!t.out){const w=40,f=Math.max(0,t.spin)/Math.max(1,t.max),by=y+S0*.6;
+    ctx.fillStyle=COL.line;ctx.fillRect(x-w/2,by,w,4);ctx.fillStyle=col;ctx.fillRect(x-w/2,by,w*f,4)}
+  if(t.hitAdv>0){ctx.font=`900 14px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=COL.gold;ctx.textAlign="center";ctx.fillText("こうかばつぐん！",x,y-TR-16)}
+}
+function drawHud(who,flip){
+  const t=tops[who];if(!t)return;
+  ctx.save();if(flip){ctx.translate(WW,WH);ctx.rotate(Math.PI)}
+  const y=WH-14,col=who==="A"?COL.shu:COL.ai,e=ELEM[t.elem];
+  ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.fillStyle=col;ctx.font=`900 15px "Zen Maru Gothic",sans-serif`;
+  const nm=who==="A"?(mode==="cpu"?"あなた":"A"):(mode==="cpu"?"CPU":"B");
+  const pos=who==="A"||flip;
+  const bx=pos?118:12, by=pos?y-40:30;
+  ctx.fillText(`${nm} ${"●".repeat(wins[who])}${"○".repeat(2-wins[who])}`,bx,by);
+  ctx.fillStyle=COL.muted;ctx.font=`700 12px "Zen Maru Gothic",sans-serif`;
+  ctx.fillText(`${t.k}（${readingOf(t.k)}） ${e.icon}${e.name}${P[who].bonus?"  ⚡パワーアップ":""}`,bx,by+16);
+  ctx.restore();
+}
+function draw(){
+  ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.clearRect(0,0,WW,WH);
+  ctx.save();
+  if(shakeFx>0){ctx.translate((Math.random()-.5)*shakeFx,(Math.random()-.5)*shakeFx);shakeFx*=.88;if(shakeFx<.3)shakeFx=0}
+  // dish
+  const g=ctx.createRadialGradient(CX,CY,10,CX,CY,R);g.addColorStop(0,COL.d1);g.addColorStop(1,COL.d2);
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.fill();
+  ctx.lineWidth=7;ctx.strokeStyle=COL.line;
+  if(!gaps.length){ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.stroke()}
+  else{const gs=[...gaps].map(g=>({...g,a:((g.a%(Math.PI*2))+Math.PI*2)%(Math.PI*2)})).sort((a,b)=>a.a-b.a);
+    for(let i=0;i<gs.length;i++){const g1=gs[i],g2=gs[(i+1)%gs.length];let e2=g2.a-g2.w/2;if(i===gs.length-1)e2+=Math.PI*2;
+      ctx.beginPath();ctx.arc(CX,CY,R,g1.a+g1.w/2,e2);ctx.stroke()}
+    ctx.strokeStyle=COL.shu;ctx.lineWidth=2;ctx.setLineDash([4,5]);for(const g of gaps){ctx.beginPath();ctx.arc(CX,CY,R+5,g.a-g.w/2,g.a+g.w/2);ctx.stroke()}ctx.setLineDash([])}
+  if(FIELD.ice){ctx.save();ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.clip();ctx.fillStyle="rgba(140,200,235,.28)";ctx.fillRect(CX-R,CY-R,R*2,R*2);
+    ctx.strokeStyle="rgba(255,255,255,.7)";ctx.lineWidth=2;for(let i=0;i<7;i++){const a=i*0.9,r=R*(.2+((i*37)%60)/100);ctx.beginPath();ctx.moveTo(CX+Math.cos(a)*r,CY+Math.sin(a)*r);ctx.lineTo(CX+Math.cos(a)*r+18,CY+Math.sin(a)*r-8);ctx.stroke()}ctx.restore()}
+  if(FIELD.spring){ctx.strokeStyle=COL.gold;ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<=120;i++){const a=i/120*Math.PI*2,r=R+(i%2?4:-4);ctx.lineTo(CX+Math.cos(a)*r,CY+Math.sin(a)*r)}ctx.stroke()}
+  if(FIELD.shrink&&R<FIELD.R){ctx.strokeStyle=COL.shu;ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();ctx.arc(CX,CY,FIELD.R,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
+  if(bar){ctx.save();ctx.translate(CX,CY);ctx.rotate(barAng);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(-R*.725+3,-6+5,R*1.45,12);
+    ctx.fillStyle="#8B5A2B";ctx.beginPath();ctx.roundRect?ctx.roundRect(-R*.725,-6,R*1.45,12,6):ctx.rect(-R*.725,-6,R*1.45,12);ctx.fill();
+    ctx.fillStyle="#C9A27A";ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();ctx.restore()}
+  if(FIELD.swirl){ctx.strokeStyle=COL.line;ctx.lineWidth=3;ctx.globalAlpha=.7;
+    for(let i=0;i<4;i++){ctx.beginPath();for(let s2=0;s2<=1;s2+=.05){const a=clock*.9+i*Math.PI/2+s2*2.2,r=12+s2*R*.85;ctx.lineTo(CX+Math.cos(a)*r,CY+Math.sin(a)*r)}ctx.stroke()}ctx.globalAlpha=1}
+  for(const p of pillars){
+    if(p.st==="warn"){ctx.strokeStyle=COL.shu;ctx.lineWidth=2;ctx.globalAlpha=.4+.4*Math.sin(clock*16);ctx.beginPath();ctx.arc(p.x,p.y,15,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1}
+    else{ctx.fillStyle="rgba(0,0,0,.2)";ctx.beginPath();ctx.arc(p.x+3,p.y+5,13,0,Math.PI*2);ctx.fill();
+      const pg=ctx.createRadialGradient(p.x-4,p.y-4,2,p.x,p.y,14);pg.addColorStop(0,"#C9B79A");pg.addColorStop(1,"#7A6A55");ctx.fillStyle=pg;ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.fill()}
+  }
+  ctx.strokeStyle=COL.line;ctx.lineWidth=1;ctx.globalAlpha=.5;for(const r of [R*.33,R*.66]){ctx.beginPath();ctx.arc(CX,CY,r,0,Math.PI*2);ctx.stroke()}ctx.globalAlpha=1;
+  if(mode==="vs"&&(phase==="aimA"||phase==="aimB")){ctx.setLineDash([6,6]);ctx.strokeStyle=COL.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,CY);ctx.lineTo(WW,CY);ctx.stroke();ctx.setLineDash([])}
+  if(engine){
+    // aim arrow (only the player who is aiming sees their own)
+    const who=phase==="aimA"?"A":phase==="aimB"?"B":null;
+    if(who&&!isCPU(who)){
+      const s=START[who];
+      if(!aim[who]){ctx.font=`700 13px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=COL.muted;ctx.textAlign="center";
+        ctx.save();ctx.translate(s.x,s.y+(who==="A"?TR+26:-TR-26));if(who==="B"&&mode==="vs")ctx.rotate(Math.PI);ctx.fillText("うしろに引っぱって はなす",0,0);ctx.restore()}
+      else{const a=aim[who],L=40+a.p*90,ex=s.x+Math.cos(a.a)*L,ey=s.y+Math.sin(a.a)*L,col=who==="A"?COL.shu:COL.ai;
+        ctx.strokeStyle=col;ctx.lineWidth=5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(ex,ey);ctx.stroke();
+        ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(ex+Math.cos(a.a)*14,ey+Math.sin(a.a)*14);ctx.lineTo(ex+Math.cos(a.a+2.4)*12,ey+Math.sin(a.a+2.4)*12);ctx.lineTo(ex+Math.cos(a.a-2.4)*12,ey+Math.sin(a.a-2.4)*12);ctx.fill();
+        ctx.save();ctx.translate(s.x,s.y+(who==="A"?TR+26:-TR-26));if(who==="B"&&mode==="vs")ctx.rotate(Math.PI);
+        ctx.font=`900 13px "Zen Maru Gothic",sans-serif`;ctx.textAlign="center";ctx.fillText(`パワー ${Math.round(a.p*100)}`,0,0);ctx.restore()}
+    }
+    for(const t of Object.values(tops))drawTop(t);
+    for(const s of sparks){ctx.globalAlpha=Math.max(0,s.life/.4);ctx.fillStyle=COL.gold;ctx.fillRect(s.x-1.5,s.y-1.5,3,3)}ctx.globalAlpha=1;
+    drawHud("A",false);drawHud("B",mode==="vs");
+    if(phase==="count"){const n=Math.ceil(count-.2);ctx.font=`900 72px "Zen Maru Gothic",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillStyle=COL.ink;ctx.lineWidth=8;ctx.strokeStyle=COL.field;const txt=n>0?String(n):"ゴー！";ctx.strokeText(txt,CX,CY);ctx.fillText(txt,CX,CY)}
+  }
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  for(const b of banners){const a=b.t<.2?b.t/.2:Math.max(0,1-(b.t-1.2)/.4);ctx.save();ctx.globalAlpha=a;ctx.translate(CX,CY-60);if(b.flip)ctx.rotate(Math.PI);
+    ctx.font=`900 24px "Zen Maru Gothic",sans-serif`;ctx.lineWidth=6;ctx.strokeStyle=COL.field;ctx.strokeText(b.text,0,0);ctx.fillStyle=b.color;ctx.fillText(b.text,0,0);ctx.restore()}
+  ctx.restore();
+}
+function loop(ts){
+  const dt=Math.min(.05,(ts-last)/1000);last=ts;clock+=dt;
+  if(phase==="count"&&!asking){const before=Math.ceil(count-.2);count-=dt;const now=Math.ceil(count-.2);if(now!==before)now>0?sfx("count"):sfx("go");if(count<=0)launch()}
+  if(phase==="battle"&&engine&&!asking)battle(dt);
+  for(const s of sparks){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt}sparks=sparks.filter(s=>s.life>0);
+  for(const b of banners)b.t+=dt;banners=banners.filter(b=>b.t<1.6);
+  draw();requestAnimationFrame(loop);
+}
+addEventListener("resize",resize);
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+readCols();resize();buildMenu();syncBtns();
+document.fonts&&document.fonts.load(`900 40px "Zen Maru Gothic"`,"漢字");
+last=performance.now();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
