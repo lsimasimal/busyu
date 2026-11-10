@@ -133,8 +133,29 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .themes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
 .themes button{font:inherit;font-size:.78rem;font-weight:700;padding:5px 10px;border-radius:999px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
 .themes button[aria-pressed="true"]{background:var(--ink);color:var(--field);border-color:var(--ink)}
+/* zukan stamps */
+.zgrid{grid-template-columns:repeat(auto-fill,minmax(48px,1fr))!important}
+.zgrid button{position:relative;height:58px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.zgrid .zg{font-size:1.35rem;line-height:1}
+.zd{display:flex;gap:3px}.zd i{width:7px;height:7px;border-radius:50%;background:var(--line)}.zd i.on{background:var(--c)}
+.zgrid button.lv0 .zg{color:var(--muted)}
+.zgrid button.lv1{background:#EAF7E1;border-color:#9BD57F;color:#2A2620}
+.zgrid button.lv2{background:#DDF0FF;border-color:#6FB3EE;color:#2A2620}
+.zgrid button.lv3{background:linear-gradient(135deg,#FFE58A,#FFC83D);border-color:#E0A100;color:#5A3D00;box-shadow:0 2px 0 #E0A100}
+.zgrid button.lv3::after{content:"★";position:absolute;top:2px;right:4px;font-size:.62rem;color:#B07800}
+.zrads{width:100%;max-width:400px;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}
+.zrads button{min-width:44px;flex:0 0 auto;font-size:1.05rem;padding:4px 8px}
+.zrads[hidden],.seg[hidden]{display:none}
+.stamps{display:flex;gap:6px;margin:6px 0 2px!important}
+.stamps span{font-size:.72rem;font-weight:900;text-align:center;padding:4px 8px;border-radius:10px;border:2px dashed var(--line);color:var(--muted);line-height:1.3}
+.stamps span.on{border:2px solid var(--c);background:var(--c);color:#fff}
+.stamps small{font-weight:700;font-size:.62rem}
 </style>
-<script>try{const t=localStorage.getItem("bd-theme")||"pop";if(t!=="auto")document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="pop"}</script>
+<script>(function(){ // theme: from the link (?theme=) first, then saved setting, else pop
+  let t=null;try{t=new URLSearchParams(location.search).get("theme")}catch(e){}
+  try{if(t)localStorage.setItem("bd-theme2",t);else t=localStorage.getItem("bd-theme2")}catch(e){}
+  t=t||"pop";window.__theme=t;if(t!=="auto")document.documentElement.dataset.theme=t;
+})()</script>
 
 </head>
 <body>
@@ -142,7 +163,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
   <div class="brand">
     <h1 id="logo">Bu<span>syu</span></h1>
     <button class="icon" id="homeIcon" aria-label="ホームにもどる" hidden>🏠</button>
-    <button class="icon" id="sfxBtn" aria-label="効果音">🔊</button>
+    <button class="icon" id="sfxBtn" aria-label="こうかおん">🔊</button>
     <button class="icon" id="bgmBtn" aria-label="BGM">🎵</button>
     <button class="icon" id="voiceBtn" aria-label="読み上げ">🗣️</button>
   </div>
@@ -150,40 +171,40 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 </div>
 <div class="stage" id="stage">
   <canvas id="cv"></canvas>
-  <button class="fab" id="rot" hidden aria-label="回転">↻</button>
-  <button class="fab" id="shake" hidden aria-label="箱をゆらす">ゆらす</button>
+  <button class="fab" id="rot" hidden aria-label="かいてん">↻</button>
+  <button class="fab" id="shake" hidden aria-label="はこをゆらす">ゆらす</button>
   <div class="overlay" id="home">
     <h2 class="hometitle">かんじで<span>あそぼう</span></h2>
     <div class="tiles">
-      <button class="tile" data-go="busyu" style="--tc:#2F80D0"><b>Busyu</b><span class="tk">海池</span><small>同じ部首で消す</small></button>
-      <button class="tile" data-go="dosu" style="--tc:#8B5A2B"><b>Dosu</b><span class="tk">陽</span><small>落とさず積む</small></button>
-      <button class="tile" data-go="kururi" style="--tc:#C8402E"><b>Kururi</b><span class="tk">風</span><small>漢字コマでたいせん</small></button>
-      <button class="tile" data-go="zukan" style="--tc:#3FA34D"><b>図鑑</b><span class="tk">📖</span><small>あつめた漢字</small></button>
+      <button class="tile" data-go="busyu" style="--tc:#2F80D0"><b>Busyu</b><span class="tk">海池</span><small>同じ<ruby>部首<rt>ぶしゅ</rt></ruby>でけす</small></button>
+      <button class="tile" data-go="dosu" style="--tc:#8B5A2B"><b>Dosu</b><span class="tk">陽</span><small>おとさず つむ</small></button>
+      <button class="tile" data-go="kururi" style="--tc:#C8402E"><b>Kururi</b><span class="tk">風</span><small><ruby>漢字<rt>かんじ</rt></ruby>コマでたいせん</small></button>
+      <button class="tile" data-go="zukan" style="--tc:#3FA34D"><b><ruby>図鑑<rt>ずかん</rt></ruby></b><span class="tk">📖</span><small>あつめた<ruby>漢字<rt>かんじ</rt></ruby></small></button>
     </div>
     <div class="themes" id="themes" role="group" aria-label="がめんの色"></div>
   </div>
   <div class="overlay" id="start" hidden>
     <button class="sub backhome" id="homeBtn1">← ホーム</button>
     <div class="seg mode" id="modes" role="group" aria-label="モード" hidden>
-      <button data-mode="busyu"><b>Busyu</b><small>同じ部首で消す</small></button>
-      <button data-mode="dosu"><b>Dosu</b><small>落とさず積む</small></button>
+      <button data-mode="busyu"><b>Busyu</b><small>同じ<ruby>部首<rt>ぶしゅ</rt></ruby>でけす</small></button>
+      <button data-mode="dosu"><b>Dosu</b><small>おとさず つむ</small></button>
     </div>
-    <div class="seg" id="plays" role="group" aria-label="遊び方"></div>
+    <div class="seg" id="plays" role="group" aria-label="あそびかた"></div>
     <p id="desc"></p>
     <div class="opts" id="stageOpts">
       <div class="seg stages" id="stages"></div>
       <p class="goal" id="stageGoal"></p>
     </div>
     <div class="opts" id="ruleOpts">
-      <div class="label">消える条件</div>
-      <div class="seg" id="rules" role="group" aria-label="消える条件"></div>
+      <div class="label">きえる じょうけん</div>
+      <div class="seg" id="rules" role="group" aria-label="きえる じょうけん"></div>
     </div>
     <div class="opts" id="busyuOpts">
-      <div class="label">出てくる部首の数</div>
+      <div class="label">出てくる<ruby>部首<rt>ぶしゅ</rt></ruby>の数</div>
       <div class="seg" id="counts"></div>
-      <label class="toggle"><input type="checkbox" id="hint" checked>部首ごとに色分けする</label>
+      <label class="toggle"><input type="checkbox" id="hint" checked><ruby>部首<rt>ぶしゅ</rt></ruby>ごとに 色をわける</label>
     </div>
-    <div class="label">漢字の範囲</div>
+    <div class="label"><ruby>漢字<rt>かんじ</rt></ruby>のはんい</div>
     <div class="seg" id="grades"></div>
     <div class="label">フォント</div>
     <div class="seg fonts" id="fonts" role="group" aria-label="フォント"></div>
@@ -199,9 +220,9 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
     <div class="btns">
       <button class="go" id="nextBtn" hidden>つぎのステージ</button>
       <button class="go" id="retryBtn">もう一回</button>
-      <button class="sub" id="setBtn">設定を変える</button>
+      <button class="sub" id="setBtn">せっていを かえる</button>
       <button class="sub" id="homeBtn2">ホーム</button>
-      <button class="sub" id="zkBtn2">📖 図鑑</button>
+      <button class="sub" id="zkBtn2">📖 <ruby>図鑑<rt>ずかん</rt></ruby></button>
     </div>
   </div>
   <div class="overlay askbox" id="ask" hidden>
@@ -209,9 +230,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
     <div class="btns"><button class="go" id="askYes">もどる</button><button class="sub" id="askNo">つづける</button></div>
   </div>
   <div class="overlay" id="zukan" hidden>
-    <h2 style="font-size:1.6rem">漢字図鑑</h2>
+    <h2 style="font-size:1.6rem"><ruby>漢字<rt>かんじ</rt></ruby><ruby>図鑑<rt>ずかん</rt></ruby></h2>
     <p id="zkCount"></p>
     <div class="seg ztabs" id="ztabs"></div>
+    <div class="seg zrads" id="zrads" role="group" aria-label="ぶしゅでえらぶ"></div>
     <div class="zcard" id="zcard" hidden></div>
     <div class="zgrid" id="zgrid"></div>
     <button class="sub" id="zkClose">とじる</button>
@@ -236,10 +258,10 @@ const RAD_SRC=[
 決|3|ケツ|き(める)|きめる
 港|3|コウ|みなと|みなと
 温|3|オン|あたた(かい)|あたたかい
-漢|3|カン|—|中国の古い国の名・おとこ
+漢|3|カン|—|中国のこと・かんじの「かん」
 油|3|ユ|あぶら|あぶら
 洗|6|セン|あら(う)|あらう
-澤|7|タク|さわ|さわ（沢の古い字）`],
+澤|7|タク|さわ|さわ（「沢」の古い書き方）`],
  ["木","きへん","#8B5A2B","h.38",`木|1|モク・ボク|き|き|w
 本|1|ホン|もと|ほん・もと|w
 森|1|シン|もり|もり|w
@@ -264,7 +286,7 @@ const RAD_SRC=[
 使|3|シ|つか(う)|つかう
 仕|3|シ・ジ|つか(える)|つかえる
 便|4|ベン・ビン|たよ(り)|べんり・たより
-位|4|イ|くらい|くらい・いる場所
+位|4|イ|くらい|くらい・いるばしょ
 信|4|シン|—|しんじる
 例|4|レイ|たと(える)|たとえ
 値|6|チ|ね・あたい|ねだん・あたい`],
@@ -272,11 +294,11 @@ const RAD_SRC=[
 草|1|ソウ|くさ|くさ
 茶|2|チャ・サ|—|おちゃ
 薬|3|ヤク|くすり|くすり
-葉|3|ヨウ|は|は（植物の）
+葉|3|ヨウ|は|は（しょくぶつの）
 落|3|ラク|お(ちる)|おちる
 苦|3|ク|くる(しい)・にが(い)|くるしい・にがい
 荷|3|カ|に|にもつ
-芽|4|ガ|め|め（植物の）
+芽|4|ガ|め|め（しょくぶつの）
 菜|4|サイ|な|な・やさい
 英|4|エイ|—|すぐれる・イギリス
 若|6|ジャク|わか(い)|わかい`],
@@ -355,7 +377,7 @@ const RAD_SRC=[
 管|4|カン|くだ|くだ
 筋|6|キン|すじ|すじ
 簡|6|カン|—|てがる・かんたん
-箸|7|—|はし|はし（食事の）`],
+箸|7|—|はし|はし（ごはんを食べる）`],
  ["日","ひへん","#F2B705","h.33~16",`日|1|ニチ・ジツ|ひ|ひ・おひさま|w
 早|1|ソウ|はや(い)|はやい|k.5
 星|2|セイ|ほし|ほし|k.5
@@ -374,7 +396,7 @@ const RAD_SRC=[
 銀|3|ギン|—|ぎん
 鏡|4|キョウ|かがみ|かがみ
 録|4|ロク|—|かきしるす
-銅|5|ドウ|—|どう（金属）
+銅|5|ドウ|—|どう（きんぞく）
 針|6|シン|はり|はり
 鋼|6|コウ|はがね|はがね
 鉛|7|エン|なまり|なまり
@@ -398,7 +420,7 @@ const RAD_SRC=[
 姉|2|シ|あね|あね
 始|3|シ|はじ(める)|はじめる
 好|4|コウ|す(き)|すき・このむ
-媛|4|エン|ひめ|ひめ（愛媛）
+媛|4|エン|ひめ|ひめ（えひめけんの「媛」）
 姓|7|セイ・ショウ|—|みょうじ
 婚|7|コン|—|けっこん
 娘|7|—|むすめ|むすめ
@@ -463,68 +485,68 @@ const BWORD_SRC=`茶室|ちゃしつ|茶道をする部屋
 計算|けいさん|数をかぞえて答えを出すこと
 説明|せつめい|わかるように話すこと
 調節|ちょうせつ|ちょうどよくととのえること
-談笑|だんしょう|笑いながら話すこと
+談笑|だんしょう|わらいながら 話すこと
 筆記|ひっき|書きとること
-細流|さいりゅう|細い川の流れ
-結婚|けっこん|夫婦になること
-緑茶|りょくちゃ|緑色の日本茶
+細流|さいりゅう|細い 川のながれ
+結婚|けっこん|ふうふに なること
+緑茶|りょくちゃ|みどり色の 日本の お茶
 持続|じぞく|長くつづくこと
-指定|してい|これと決めること
-寒波|かんぱ|はげしい寒さがやってくること
-通信|つうしん|知らせを伝えること
-送信|そうしん|データなどを送ること
-遊泳|ゆうえい|泳ぐこと
-返信|へんしん|返事を送ること
-時計|とけい|時刻をはかる道具
-暖流|だんりゅう|あたたかい海の流れ
-鉄橋|てっきょう|鉄でできた橋
-始終|しじゅう|始めから終わりまで・いつも
-体温|たいおん|体の温度
-作詩|さくし|詩をつくること
+指定|してい|これと きめること
+寒波|かんぱ|とても さむい 空気が やってくること
+通信|つうしん|しらせを つたえること
+送信|そうしん|メールなどを おくること
+遊泳|ゆうえい|およぐこと
+返信|へんしん|へんじを おくること
+時計|とけい|時こくを はかる どうぐ
+暖流|だんりゅう|あたたかい 海の ながれ
+鉄橋|てっきょう|てつで できた はし
+始終|しじゅう|はじめから おわりまで・いつも
+体温|たいおん|体の おんど
+作詩|さくし|しを 作ること
 苦笑|くしょう|にがわらい
 英語|えいご|イギリスやアメリカなどのことば
 林道|りんどう|林の中の道
 村道|そんどう|村の道
-温暖|おんだん|気候があたたかいこと
-決定|けってい|はっきり決めること
-流通|りゅうつう|品物が世の中に出回ること
-洗練|せんれん|あかぬけて上品になること
-油絵|あぶらえ|油絵の具でかいた絵
+温暖|おんだん|気こうが あたたかいこと
+決定|けってい|はっきり きめること
+流通|りゅうつう|しなものが 世の中に 出まわること
+洗練|せんれん|あかぬけて じょうひんに なること
+油絵|あぶらえ|あぶらの えのぐで かいた 絵
 何時|なんじ|何時ごろか
-作家|さっか|小説などを書く人
-寒暖|かんだん|寒さとあたたかさ
-定時|ていじ|決まった時刻
-宝箱|たからばこ|宝物を入れる箱
-運休|うんきゅう|電車やバスが運転を休むこと
+作家|さっか|お話などを 書く人
+寒暖|かんだん|さむさと あたたかさ
+定時|ていじ|きまった 時こく
+宝箱|たからばこ|たからものを 入れる はこ
+運休|うんきゅう|電車や バスが お休みすること
 達筆|たっぴつ|字が上手なこと
-近海|きんかい|陸に近い海
+近海|きんかい|りくに 近い 海
 速記|そっき|すばやく書きとること
-等級|とうきゅう|ランク・段階
-晩婚|ばんこん|年をとってからの結婚
-時速|じそく|1時間に進むきょり
+等級|とうきゅう|ランク・だんかい
+晩婚|ばんこん|年を とってからの けっこん
+時速|じそく|1時間に すすむ きょり
 暗記|あんき|そらでおぼえること
-銅線|どうせん|銅でできた線
-鉄道|てつどう|線路の上を走る乗り物
-針葉|しんよう|針のように細い葉
-喫茶|きっさ|お茶を飲むこと
-折紙|おりがみ|紙を折っていろいろな形を作る遊び
-給油|きゅうゆ|燃料を入れること
-紙箱|かみばこ|紙でできた箱
-訓練|くんれん|くり返し練習してきたえること
+銅線|どうせん|どうで できた 線
+鉄道|てつどう|線ろの 上を 走る のりもの
+針葉|しんよう|はりのように 細い は
+喫茶|きっさ|お茶を のむこと
+折紙|おりがみ|紙を おって いろいろな 形を 作る あそび
+給油|きゅうゆ|ねんりょうを 入れること
+紙箱|かみばこ|紙で できた はこ
+訓練|くんれん|くりかえし れんしゅうして きたえること
 男子|だんし|男の子
 女子|じょし|女の子
 大木|たいぼく|大きな木
 本日|ほんじつ|きょう
 早口|はやくち|話すのがはやいこと
-人口|じんこう|そこに住む人の数
+人口|じんこう|そこに すむ 人の 数
 十字|じゅうじ|十の字の形
 王子|おうじ|王さまの男の子ども
 大人|おとな|一人前になった人
 日本|にほん|わたしたちの国
 一本|いっぽん|一つの細長いもの
 三日|みっか|月の三番目の日・三日間
-天下|てんか|世の中ぜんたい
-村人|むらびと|村に住む人
+天下|てんか|世の中 ぜんたい
+村人|むらびと|村に すむ 人
 休日|きゅうじつ|休みの日
 十人|じゅうにん|十の人
 大王|だいおう|王さまの中の王さま
@@ -538,48 +560,48 @@ const BWORD_SRC=`茶室|ちゃしつ|茶道をする部屋
 雨水|あまみず|雨の水
 竹林|ちくりん|竹の林
 水田|すいでん|水をはった田んぼ
-木星|もくせい|太陽系でいちばん大きい星
+木星|もくせい|たいようけいで いちばん 大きい 星
 金星|きんせい|明けの明星・よいの明星
-土星|どせい|輪のある星
+土星|どせい|わの ある 星
 十日|とおか|月の十番目の日・十日間
 七日|なのか|月の七番目の日・七日間
 女王|じょおう|女の王さま
-手紙|てがみ|人に送る文
+手紙|てがみ|人に おくる 文
 南口|みなみぐち|南がわの出入り口
 大地|だいち|広い土地
-番地|ばんち|住所の番号
+番地|ばんち|じゅうしょの 番ごう
 名字|みょうじ|家の名前
 日記|にっき|毎日のできごとを書いたもの`;
 const DWORD_SRC=`花火|はなび|火薬で光や音を楽しむもの
 読書|どくしょ|本を読むこと
-電車|でんしゃ|電気で線路を走る乗り物
-学校|がっこう|勉強をするところ
+電車|でんしゃ|電気で 線ろを 走る のりもの
+学校|がっこう|べんきょうを する ところ
 青空|あおぞら|晴れた青い空
-友達|ともだち|仲のよい人
+友達|ともだち|なかの よい 人
 時間|じかん|時の長さ
-音楽|おんがく|音でつくる芸術
+音楽|おんがく|音で つくる げいじゅつ
 天気|てんき|空のようす
-地図|ちず|土地のようすを表した図
-新聞|しんぶん|ニュースをのせた印刷物
-漢字|かんじ|中国から伝わった文字
-野菜|やさい|食べるために育てる草
+地図|ちず|土地の ようすを あらわした 図
+新聞|しんぶん|ニュースを のせた いんさつぶつ
+漢字|かんじ|中国から つたわった 文字
+野菜|やさい|食べるために そだてる 草
 図書|としょ|本
 雪山|ゆきやま|雪がつもった山
-夕日|ゆうひ|夕方の太陽`;
+夕日|ゆうひ|夕方の 太よう`;
 const IDIOM_SRC=`一石二鳥|いっせきにちょう|一つのことで二つの得をすること
-十人十色|じゅうにんといろ|考えや好みは人それぞれちがうこと
-一期一会|いちごいちえ|一生に一度の出会いを大切にすること
-温故知新|おんこちしん|昔のことを学んで新しい知識を得ること
-花鳥風月|かちょうふうげつ|自然の美しい景色
-以心伝心|いしんでんしん|言葉にしなくても心が通じ合うこと
-晴耕雨読|せいこううどく|晴れたら畑仕事、雨なら読書というのんびりした暮らし
-七転八起|しちてんはっき|何度失敗してもくじけず立ち上がること
-起承転結|きしょうてんけつ|物語や文章の組み立て方
+十人十色|じゅうにんといろ|考えや すきなものは 人それぞれ ちがうこと
+一期一会|いちごいちえ|一生に 一どの 出会いを 大切にすること
+温故知新|おんこちしん|むかしのことを 学んで 新しいことを 知ること
+花鳥風月|かちょうふうげつ|しぜんの 美しい けしき
+以心伝心|いしんでんしん|ことばに しなくても 心が 通じあうこと
+晴耕雨読|せいこううどく|晴れたら はたけしごと、雨なら 読書という のんびりした くらし
+七転八起|しちてんはっき|何ども しっぱいしても くじけず 立ち上がること
+起承転結|きしょうてんけつ|お話や 文の 組み立て方
 自画自賛|じがじさん|自分で自分をほめること
 千差万別|せんさばんべつ|いろいろなちがいがあること
-臨機応変|りんきおうへん|その場に合わせてうまく対応すること
-一心同体|いっしんどうたい|心も体も一つのように強く結びつくこと
-試行錯誤|しこうさくご|失敗をくり返しながら正しいやり方を見つけること`;
+臨機応変|りんきおうへん|その場に 合わせて うまく 動くこと
+一心同体|いっしんどうたい|心も 体も 一つのように 強く むすびつくこと
+試行錯誤|しこうさくご|しっぱいを くりかえしながら 正しい やり方を 見つけること`;
 
 const KDATA={};
 // region codes (where the radical sits, as fractions of the character box):
@@ -616,28 +638,28 @@ const FALLBACK=`"Hiragino Sans","Noto Sans JP",sans-serif`;
 const FONTS=[
   {id:"maru",name:"丸ゴシック",family:`"Zen Maru Gothic"`,weight:900},
   {id:"mincho",name:"明朝",family:`"Shippori Mincho B1"`,weight:800},
-  {id:"fude",name:"毛筆",family:`"Yuji Syuku"`,weight:400},
+  {id:"fude",name:"ふで",family:`"Yuji Syuku"`,weight:400},
   {id:"dot",name:"ドット",family:`"DotGothic16"`,weight:400},
-  {id:"futo",name:"極太",family:`"Dela Gothic One"`,weight:400},
+  {id:"futo",name:"ごくぶと",family:`"Dela Gothic One"`,weight:400},
   {id:"magic",name:"マジック",family:`"Yusei Magic"`,weight:400},
 ];
 const BSTAGES=[
-  {count:3,goal:"clear",n:8,text:"8個消す"},
-  {count:3,time:60,goal:"clear",n:15,text:"60秒以内に15個消す"},
+  {count:3,goal:"clear",n:8,text:"8こ けす"},
+  {count:3,time:60,goal:"clear",n:15,text:"60びょうで 15こ けす"},
   {count:4,goal:"combo",n:3,text:"3コンボを出す"},
-  {count:4,goal:"juku",n:1,chance:.5,text:"熟語を1つ完成させる（読める向きに横か縦に並べてくっつける）"},
-  {count:5,goal:"ojama",n:2,ojama:.2,item:.22,text:"お邪魔字を2つ消す（ボムで消せる）"},
-  {count:5,time:45,goal:"clear",n:20,text:"45秒以内に20個消す"},
+  {count:4,goal:"juku",n:1,chance:.5,text:"じゅくごを 1つ つくる（読める じゅんに よこか たてに ならべて くっつける）"},
+  {count:5,goal:"ojama",n:2,ojama:.2,item:.22,text:"おじゃま字を 2つ けす（ボムで けせる）"},
+  {count:5,time:45,goal:"clear",n:20,text:"45びょうで 20こ けす"},
   {count:6,goal:"score",n:2000,text:"2000点とる"},
-  {count:8,hint:false,goal:"clear",n:15,text:"色分けなしで15個消す"},
+  {count:8,hint:false,goal:"clear",n:15,text:"色わけ なしで 15こ けす"},
 ];
 const DSTAGES=[
-  {goal:"placed",n:5,text:"5個積む"},
-  {goal:"height",n:3,text:"高さ3字まで積む"},
-  {goal:"placed",n:10,text:"10個積む（10個目は熟語）"},
-  {goal:"shiri",n:1,shiri:.6,text:"しりとり積みを1回決める"},
-  {goal:"height",n:4,events:0,text:"風と地震の中で高さ4字まで積む"},
-  {goal:"placed",n:20,text:"20個積む"},
+  {goal:"placed",n:5,text:"5こ つむ"},
+  {goal:"height",n:3,text:"高さ 3字まで つむ"},
+  {goal:"placed",n:10,text:"10こ つむ（10こ目は じゅくご）"},
+  {goal:"shiri",n:1,shiri:.6,text:"しりとりづみを 1回 きめる"},
+  {goal:"height",n:4,events:0,text:"風と じしんの中で 高さ 4字まで つむ"},
+  {goal:"placed",n:20,text:"20こ つむ"},
 ];
 
 const inRegion=(reg,u,v)=>reg.boxes.some(b=>u>=b[0]&&u<b[2]&&v>=b[1]&&v<b[3]);
@@ -665,8 +687,19 @@ const cleared_={get busyu(){return +store("bd-stage-busyu")||0},get dosu(){retur
 
 // ================= zukan (collection) =================
 let ZK;try{ZK=JSON.parse(store("bd-zukan")||"{}")}catch(e){ZK={}}
-ZK.k=ZK.k||{};ZK.w=ZK.w||{};ZK.i=ZK.i||{};
-let newSeen=0;
+ZK.k=ZK.k||{};ZK.w=ZK.w||{};ZK.i=ZK.i||{};ZK.c=ZK.c||{};
+// stamps per kanji: 1 = cleared in Busyu, 2 = stacked in Dosu, 4 = beaten in Kururi; all three = complete
+let newSeen=0,newStamp=0;
+const lvOf=k=>{const v=ZK.c[k]|0;return(v&1)+(v>>1&1)+(v>>2&1)};
+// Kururi hands back the kanji beaten there (?beat=) so the stamps arrive even where pages cannot share storage
+(function(){try{const q=new URLSearchParams(location.search),bt=q.get("beat");
+  if(bt){for(const k of bt.split(",")){if(!KDATA[k])continue;ZK.k[k]=1;ZK.c[k]=(ZK.c[k]|0)|4}store("bd-zukan",JSON.stringify(ZK))}
+  if(location.search)history.replaceState(null,"",location.pathname)}catch(e){}})();
+function stamp(k,bit){
+  if(!KDATA[k])return;seen("k",k);const v=ZK.c[k]|0;if(v&bit)return;
+  ZK.c[k]=v|bit;newStamp++;store("bd-zukan",JSON.stringify(ZK));
+  if(lvOf(k)===3)banner(`「${k}」かんせい！ ★`,COL.gold);
+}
 function seen(type,key){
   if(type==="k"&&!KDATA[key])return;if(type!=="k"&&!WORDS[key])return;
   if(ZK[type][key])return;ZK[type][key]=1;newSeen++;store("bd-zukan",JSON.stringify(ZK));
@@ -929,7 +962,7 @@ function markRemove(b,i){
   ghosts.push({spec:{glyphs:[{...g,item:null}],sc:b.spec.sc},x:c.x,y:c.y,a:b.angle,t:0});
   puff(c.x,c.y,glyphColor(b.spec,g),8);
   if(!removeMap.has(b))removeMap.set(b,new Set());removeMap.get(b).add(i);
-  cleared++;if(g.oj)ojamaCleared++;
+  cleared++;if(g.oj)ojamaCleared++;stamp(g.k,1);
   return c;
 }
 function processClears(checkJuku){
@@ -974,7 +1007,7 @@ function processClears(checkJuku){
       for(const [bb,ii] of [[a,A.gi],[b,Bp.gi]]){const g=bb.spec.glyphs[ii];markRemove(bb,ii);if(g.item==="bomb")bombs.push(glyphCenter(bb,ii));if(g.item==="shake")shakeStock++}
       const pts=100*level();score+=pts;jukuDone++;seen("w",w);
       floats.push({x:(ca.x+cb.x)/2,y:(ca.y+cb.y)/2-10,text:`${w}（${WORDS[w].yomi}）+${pts}`,t:-.3,big:true});
-      banner(`熟語完成！ ${w}`);sfx("juku");any=true;
+      banner(`じゅくご かんせい！ ${w}`);sfx("juku");any=true;
     }
   }
   // 3) bombs clear everything nearby, including お邪魔字 (and set off other bombs)
@@ -1024,7 +1057,7 @@ function busyuUpdate(dt){
   }
   danger=over?danger+dt:Math.max(0,danger-dt*2);
   if(danger>2.2){endGame("あふれた！");return}
-  if(timeLeft){timeLeft-=dt;if(timeLeft<=0){timeLeft=0;endGame("時間切れ！")}}
+  if(timeLeft){timeLeft-=dt;if(timeLeft<=0){timeLeft=0;endGame("時間ぎれ！")}}
   $("shake").hidden=shakeStock<=0;$("shake").textContent=`〰️ ゆらす ×${shakeStock}`;
 }
 function busyuDraw(){
@@ -1093,18 +1126,18 @@ function dosuUpdate(dt){
     const b=lastBody;
     settleT=(b.isSleeping||(b.speed<.25&&b.angularSpeed<.012))?settleT+dt:0;
     if(settleT>.35||now-dropT>4){
-      waiting=false;placed++;pts+=b.spec.pts;sfx("place");
-      if(b.spec.kind==="熟語")floats.push({x:b.position.x,y:b.bounds.min.y-10,text:`+30 熟語ボーナス`,t:0});
+      waiting=false;placed++;pts+=b.spec.pts;sfx("place");for(const gl of b.spec.glyphs)stamp(gl.k,2);
+      if(b.spec.kind==="熟語")floats.push({x:b.position.x,y:b.bounds.min.y-10,text:`+30 じゅくごボーナス`,t:0});
       if(b.spec.word){const prevB=pieces.find(p=>p.spec===b.spec.after);
         if(prevB&&bodiesTouch(b,prevB)&&b.position.y<prevB.position.y){
-          pts+=50;shiriDone++;seen("w",b.spec.word);sfx("juku");banner(`しりとり積み！ ${b.spec.word}`);
+          pts+=50;shiriDone++;seen("w",b.spec.word);sfx("juku");banner(`しりとりづみ！ ${b.spec.word}`);
           floats.push({x:b.position.x,y:b.bounds.min.y-10,text:`${b.spec.word}（${WORDS[b.spec.word].yomi}）+50`,t:-.3,big:true});
         }}
       if(play==="vs"){turn^=1;sfx("turn");banner(`${turn?"B":"A"}のばん`,turn?COL.ai:COL.shu)}
       hold=next;next=dosuPiece(++seq,hold);holdA=0;
     }
   }
-  for(const b of pieces)if(b.position.y>D.SLAB+260){endGame(play==="vs"?`${lastDropper?"A":"B"}の勝ち！`:"落ちた！");return}
+  for(const b of pieces)if(b.position.y>D.SLAB+260){endGame(play==="vs"?`${lastDropper?"A":"B"}のかち！`:"おちた！");return}
   let top=baseTop;for(const b of pieces)if((b!==lastBody||!waiting)&&b.speed<.6)top=Math.min(top,b.bounds.min.y);
   maxH=Math.max(maxH,(baseTop-top)/S0);
   score=pts+Math.floor(maxH*20);
@@ -1112,7 +1145,7 @@ function dosuUpdate(dt){
   if(evt){evt.t+=dt;if(evt.t>evt.dur){evt=null;evtTimer=10+Math.random()*8}}
   else if(maxH>=evtFrom){evtTimer-=dt;if(evtTimer<=0){
     const wind=Math.random()<.5;evt={type:wind?"wind":"quake",t:-1.3,dur:wind?3:2,dir:Math.random()<.5?-1:1,str:Math.min(1.7,.7+maxH*.1),fired:false};
-    banner(wind?(evt.dir<0?"← 風がくる！":"風がくる！ →"):"地震がくる！",COL.ai);sfx("warn")}}
+    banner(wind?(evt.dir<0?"← 風がくる！":"風がくる！ →"):"じしんが くる！",COL.ai);sfx("warn")}}
   if(evt&&evt.t>=0&&!evt.fired){evt.fired=true;sfx(evt.type);if(evt.type==="quake")shakeFx=6}
   if(evt&&evt.type==="quake"&&evt.t>=0)shakeFx=Math.max(shakeFx,3);
   const target=towerTop()-120;holdY+=(target-holdY)*Math.min(1,dt*3);
@@ -1184,7 +1217,7 @@ function draw(){
   // screen-space HUD
   ctx.textBaseline="alphabetic";
   if(next){
-    const L={"熟語":"熟語！","大":"大きい！","小":"小さい！","お邪魔":"お邪魔字","チャンス":"熟語チャンス！","しりとり":"しりとり！","ボム":"ボム！","ゆらし":"ゆらし！"};
+    const L={"熟語":"じゅくご！","大":"大きい！","小":"小さい！","お邪魔":"おじゃま字","チャンス":"じゅくごチャンス！","しりとり":"しりとり！","ボム":"ボム！","ゆらし":"ゆらし！"};
     ctx.fillStyle=next.kind?COL.shu:COL.muted;ctx.font=`700 12px "Zen Maru Gothic",sans-serif`;ctx.textAlign="right";
     ctx.fillText(next.kind?`つぎ・${L[next.kind]}`:"つぎ",WW-12,22);
     if(next.word){ctx.fillStyle=COL.muted;ctx.font=`700 11px "Zen Maru Gothic",sans-serif`;ctx.fillText(`${next.word}（${WORDS[next.word].yomi}）`,WW-12,84)}
@@ -1194,8 +1227,8 @@ function draw(){
   ctx.textAlign="left";ctx.font=`700 12px "Zen Maru Gothic",sans-serif`;let y=22;
   if(play==="stage"&&stg){
     ctx.fillStyle=COL.ink;const v=goalValue();
-    ctx.fillText(`お題：${stg.text.replace(/（.*）/,"")}`,12,y);y+=16;
-    ctx.fillStyle=COL.shu;ctx.fillText(`${stg.goal==="height"?v.toFixed(1):v} / ${stg.n}`+(timeLeft?`　のこり ${Math.ceil(timeLeft)}秒`:""),12,y);y+=16;
+    ctx.fillText(`おだい：${stg.text.replace(/（.*）/,"")}`,12,y);y+=16;
+    ctx.fillStyle=COL.shu;ctx.fillText(`${stg.goal==="height"?v.toFixed(1):v} / ${stg.n}`+(timeLeft?`　のこり ${Math.ceil(timeLeft)}びょう`:""),12,y);y+=16;
   }
   if(play==="vs"&&running){ctx.font=`900 18px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=turn?COL.ai:COL.shu;ctx.fillText(`${turn?"B":"A"}のばん`,12,y+4)}
   // banners
@@ -1215,10 +1248,10 @@ function loop(ts){
 }
 function hud(){
   $("score").textContent=play==="vs"?placed:score;
-  if(mode==="busyu"){$("lv").textContent=`レベル ${level()}・${cleared}個消した`;
-    const b=store("busyu-best-"+count);$("best").textContent=play==="free"?(`部首${count}つ`+(b?` ベスト ${b}`:"")):`ステージ ${stageIdx.busyu+1}`}
-  else if(play==="vs"){$("lv").textContent=`2人対戦・高さ ${maxH.toFixed(1)}字`;$("best").textContent="積んだ数"}
-  else{$("lv").textContent=`${placed}個・高さ ${maxH.toFixed(1)}字`;const b=store("dosu-best");$("best").textContent=play==="free"?(b?`ベスト ${b}`:""):`ステージ ${stageIdx.dosu+1}`}
+  if(mode==="busyu"){$("lv").textContent=`レベル ${level()}・${cleared}こ けした`;
+    const b=store("busyu-best-"+count);$("best").textContent=play==="free"?(`ぶしゅ${count}つ`+(b?` ベスト ${b}`:"")):`ステージ ${stageIdx.busyu+1}`}
+  else if(play==="vs"){$("lv").textContent=`ふたりで・高さ ${maxH.toFixed(1)}字`;$("best").textContent="つんだ数"}
+  else{$("lv").textContent=`${placed}こ・高さ ${maxH.toFixed(1)}字`;const b=store("dosu-best");$("best").textContent=play==="free"?(b?`ベスト ${b}`:""):`ステージ ${stageIdx.dosu+1}`}
 }
 
 // ================= input =================
@@ -1244,24 +1277,24 @@ const drop=()=>{if(!running)return;mode==="busyu"?busyuDrop():dosuDrop()};
 
 // ================= menus =================
 const DESC={
-  busyu:["同じ部首の漢字どうしがくっつくと消えます（「部首どうし」なら部首の部分どうしが触れたときだけ）。熟語になる2字を読める向きに並べると大ボーナス。灰色のお邪魔字は光る💣ボムで消せます。",
-         "指で位置を決めて離すと落下（PCはマウスとクリック、←→とSpaceも可）。〰️を消すと「ゆらす」が使えます（PCはSキー）"],
-  dosu:["四字熟語の土台に漢字を積もう。両側は穴、落ちたら終わり。5個ごとに大きさが変わり、10個ごとに熟語。前の字と熟語になる字を上に乗せると「しりとり積み」ボーナス。高くなると風や地震も。",
-        "指で位置を決めて離すと落下、右下の↻で回転（PCはマウスとクリック、↑かRで回転）"],
+  busyu:["同じ<ruby>部首<rt>ぶしゅ</rt></ruby>の<ruby>漢字<rt>かんじ</rt></ruby>どうしが くっつくと きえるよ。<ruby>熟語<rt>じゅくご</rt></ruby>になる 2字を 読める じゅんに ならべると 大ボーナス。はい色の おじゃま字は 光る💣ボムで けせるよ。",
+         "ゆびで ばしょを きめて はなすと おちるよ（パソコンは マウスと クリック、←→と スペースでも OK）。〰️を けすと「ゆらす」が つかえるよ（パソコンは Sキー）"],
+  dosu:["<ruby>四字熟語<rt>よじじゅくご</rt></ruby>の 土台に <ruby>漢字<rt>かんじ</rt></ruby>を つもう。りょうがわは あな、おちたら おわり。5こごとに 大きさが かわり、10こごとに <ruby>熟語<rt>じゅくご</rt></ruby>。前の字と <ruby>熟語<rt>じゅくご</rt></ruby>になる字を 上に のせると「しりとりづみ」ボーナス。高くなると 風や じしんも くるよ。",
+        "ゆびで ばしょを きめて はなすと おちるよ。右下の ↻で まわす（パソコンは マウスと クリック、↑か Rで まわす）"],
 };
 function buildMenu(){
   if(mode==="busyu"&&play==="vs")play="free";
   document.querySelectorAll("#modes button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===mode));
-  const plays=[["free","フリー"],["stage","ステージ"]];if(mode==="dosu")plays.push(["vs","2人対戦"]);
+  const plays=[["free","フリー"],["stage","ステージ"]];if(mode==="dosu")plays.push(["vs","ふたりで"]);
   const pb=$("plays");pb.innerHTML="";
   for(const [id,name] of plays){const b=document.createElement("button");b.textContent=name;b.setAttribute("aria-pressed",id===play);
     b.onclick=()=>{play=id;store("bd-play",id);buildMenu()};pb.appendChild(b)}
-  $("desc").innerHTML=play==="vs"?"1台を2人で交互に使って積み上げます。自分の番で字を落としたら負け。":DESC[mode][0];
+  $("desc").innerHTML=play==="vs"?"1台を ふたりで こうたいに つかって つみ上げるよ。じぶんの 番で 字を おとしたら まけ。":DESC[mode][0];
   $("howto").innerHTML=DESC[mode][1];
   $("busyuOpts").hidden=!(mode==="busyu"&&play==="free");
   $("ruleOpts").hidden=mode!=="busyu";
   const rb=$("rules");rb.innerHTML="";
-  for(const [id,name,sub] of [["rad","部首どうし","色の部分が触れたら"],["any","字のどこでも","かんたん"]]){
+  for(const [id,name,sub] of [["rad","ぶしゅどうし","色の ところが ふれたら"],["any","字のどこでも","かんたん"]]){
     const b=document.createElement("button");b.setAttribute("aria-pressed",id===rule);b.innerHTML=`${name}<small>${sub}</small>`;
     b.onclick=()=>{rule=id;store("bd-rule",id);buildMenu()};rb.appendChild(b)}
   $("stageOpts").hidden=play!=="stage";
@@ -1273,7 +1306,7 @@ function buildMenu(){
   const sb=$("stages");sb.innerHTML="";
   list.forEach((s,i)=>{const b=document.createElement("button");b.disabled=i>done;b.setAttribute("aria-pressed",i===stageIdx[mode]);
     b.innerHTML=`${i+1}<small>${i<done?"✓":i>done?"🔒":"&nbsp;"}</small>`;b.onclick=()=>{stageIdx[mode]=i;buildMenu()};sb.appendChild(b)});
-  const cs=list[stageIdx[mode]];$("stageGoal").textContent=`ステージ${stageIdx[mode]+1}：${cs.text}`+(mode==="busyu"?`（部首${cs.count}つ）`:"");
+  const cs=list[stageIdx[mode]];$("stageGoal").textContent=`ステージ${stageIdx[mode]+1}：${cs.text}`+(mode==="busyu"?`（ぶしゅ${cs.count}つ）`:"");
   // counts
   const av=availRads().length,cb=$("counts");cb.innerHTML="";
   for(const c of COUNTS){const b=document.createElement("button");b.setAttribute("aria-pressed",c===count);b.disabled=c>av;
@@ -1295,18 +1328,19 @@ function goHome(){asking=false;$("ask").hidden=true;
   $("logo").innerHTML="かんじ<span>あそび</span>";document.title="かんじあそび";$("score").textContent="";$("lv").textContent="";$("best").textContent="";
 }
 function openMode(m){
-  if(m==="kururi"){location.href="koma.html";return}
+  if(m==="kururi"){location.href="koma.html?theme="+curTheme();return}
   if(m==="zukan"){openZukan("home");return}
   if(m!==mode){engine=null;sim=false;next=null;$("legend").innerHTML=""} // stop drawing the previous mode's board
-  mode=m;store("bd-mode",mode);buildMenu();$("home").hidden=true;$("start").hidden=false;$("homeIcon").hidden=false;cv.style.visibility="visible";
+  mode=m;store("bd-mode",mode);buildMenu();$("home").hidden=true;$("start").hidden=false;$("homeIcon").hidden=false;cv.style.visibility="hidden";
 }
 document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{ac();openMode(b.dataset.go)});
 // screen colours: pop (default) / light / dark / follow the device
 const THEMES=[["pop","🎈 ポップ"],["light","☀️ あかるい"],["dark","🌙 くらい"],["auto","📱 じどう"]];
-function applyTheme(t){if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;readCols()}
-function buildThemes(){const cur=store("bd-theme")||"pop",el=$("themes");el.innerHTML="";
+function curTheme(){return store("bd-theme2")||window.__theme||"pop"}
+function applyTheme(t){window.__theme=t;if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;readCols()}
+function buildThemes(){const cur=curTheme(),el=$("themes");el.innerHTML="";
   for(const [id,name] of THEMES){const b=document.createElement("button");b.textContent=name;b.setAttribute("aria-pressed",id===cur);
-    b.onclick=()=>{store("bd-theme",id);applyTheme(id);buildThemes()};el.appendChild(b)}}
+    b.onclick=()=>{store("bd-theme2",id);applyTheme(id);buildThemes()};el.appendChild(b)}}
 buildThemes();
 $("homeBtn1").onclick=goHome;
 // in-page confirmation (browser dialogs are blocked inside some viewers, such as the Claude page)
@@ -1322,9 +1356,9 @@ function buildLegend(){
   else{const d=document.createElement("div");d.className="chip plain";d.textContent=`土台：${idiom}（${WORDS[idiom].yomi}）`;el.appendChild(d)}
 }
 
-async function start(){
+async function start(){cv.style.visibility="visible";
   ac();startBgm();lastSaid=null;if(voiceOn)say(" ",true);
-  $("startBtn").disabled=true;$("startBtn").textContent="読み込み中…";$("retryBtn").disabled=true;
+  $("startBtn").disabled=true;$("startBtn").textContent="よみこみ中…";$("retryBtn").disabled=true;
   try{await Promise.race([document.fonts.load(fontStr(40),ALL_KANJI.join("")+DOSU_JUKUGO.join("")+IDIOMS.join("")),new Promise(r=>setTimeout(r,4000))])}catch(e){}
   $("startBtn").disabled=false;$("startBtn").textContent="スタート";$("retryBtn").disabled=false;
   $("start").hidden=true;$("over").hidden=true;$("zukan").hidden=true;
@@ -1333,29 +1367,29 @@ async function start(){
   else if(stg&&stg.hint!==false)$("hint").checked=true;
   engine=Engine.create();engine.gravity.y=1;engine.positionIterations=8;engine.velocityIterations=6;
   Events.on(engine,"collisionStart",onLand);
-  now=0;acc=0;score=0;ghosts=[];floats=[];particles=[];banners=[];camY=0;holdX=WW/2;newSeen=0;timeLeft=0;
+  now=0;acc=0;score=0;ghosts=[];floats=[];particles=[];banners=[];camY=0;holdX=WW/2;newSeen=0;newStamp=0;timeLeft=0;
   if(mode==="busyu")busyuInit();else dosuInit();
   buildLegend();hud();
   $("rot").hidden=mode!=="dosu";$("shake").hidden=true;
   running=true;sim=true;
-  if(stg)banner(`お題：${stg.text.replace(/（.*）/,"")}`,COL.ink);
+  if(stg)banner(`おだい：${stg.text.replace(/（.*）/,"")}`,COL.ink);
 }
 function finish(){running=false;$("rot").hidden=true;$("shake").hidden=true}
 function endGame(title){
   finish();let detail;
-  if(play==="vs"){detail=`${placed}個・高さ ${maxH.toFixed(1)}字まで積みました`;sfx("win")}
+  if(play==="vs"){detail=`${placed}こ・高さ ${maxH.toFixed(1)}字まで つみました`;sfx("win")}
   else if(play==="stage"){detail=`ステージ${stageIdx[mode]+1}：${stg.text}`;sfx("over")}
   else if(mode==="busyu"){
     const key="busyu-best-"+count,prev=+store(key)||0;
-    detail=`部首${active.length}つ・${cleared}個消した・熟語${jukuDone}つ・最大${maxCombo}コンボ`+(score>prev?"　自己ベスト更新！":prev?`　ベスト ${prev}`:"");
+    detail=`ぶしゅ${active.length}つ・${cleared}こ けした・じゅくご${jukuDone}つ・さいだい${maxCombo}コンボ`+(score>prev?"　じこベスト こうしん！":prev?`　ベスト ${prev}`:"");
     if(score>prev)store(key,score);sfx("over");
   }else{
     const prev=+store("dosu-best")||0;
-    detail=`${placed}個積んだ・最高 ${maxH.toFixed(1)}字・しりとり${shiriDone}回`+(score>prev?"　自己ベスト更新！":prev?`　ベスト ${prev}`:"");
+    detail=`${placed}こ つんだ・さいこう ${maxH.toFixed(1)}字・しりとり${shiriDone}回`+(score>prev?"　じこベスト こうしん！":prev?`　ベスト ${prev}`:"");
     if(score>prev)store("dosu-best",score);
     if(maxH>(+store("dosu-besth")||0))store("dosu-besth",maxH.toFixed(1));sfx("over");
   }
-  if(newSeen)detail+=`<br>📖 図鑑に${newSeen}件追加！`;
+  detail+=zukanNote();
   $("overTitle").textContent=title;$("result").textContent=play==="vs"?"":`${score} 点`;$("detail").innerHTML=detail;
   $("nextBtn").hidden=true;$("retryBtn").textContent="もう一回";
   hud();
@@ -1366,29 +1400,48 @@ function stageClear(){
   const list=mode==="busyu"?BSTAGES:DSTAGES,i=stageIdx[mode];
   if(i+1>cleared_[mode])store("bd-stage-"+mode,i+1);
   $("overTitle").textContent="ステージクリア！";$("result").textContent=`${score} 点`;
-  $("detail").innerHTML=`ステージ${i+1}：${stg.text}`+(i+1>=list.length?"<br>全ステージクリア、おめでとう！":"")+(newSeen?`<br>📖 図鑑に${newSeen}件追加！`:"");
+  $("detail").innerHTML=`ステージ${i+1}：${stg.text}`+(i+1>=list.length?"<br>ぜんぶの ステージ クリア、おめでとう！":"")+zukanNote();
   $("nextBtn").hidden=i+1>=list.length;$("retryBtn").textContent="もう一回";
   hud();
   setTimeout(()=>{sim=false;$("over").hidden=false;($("nextBtn").hidden?$("retryBtn"):$("nextBtn")).focus()},900);
 }
 $("startBtn").onclick=start;$("retryBtn").onclick=start;
 $("nextBtn").onclick=()=>{stageIdx[mode]++;start()};
-$("setBtn").onclick=()=>{$("over").hidden=true;buildMenu();$("start").hidden=false};
+$("setBtn").onclick=()=>{$("over").hidden=true;cv.style.visibility="hidden";buildMenu();$("start").hidden=false};
 $("hint").onchange=()=>{store("busyu-hint",$("hint").checked?"1":"0")};
 
 // ================= zukan screen =================
-let ztab="k",zFrom=null;
+function zukanNote(){const a=[];if(newSeen)a.push(`あたらしい字 ${newSeen}`);if(newStamp)a.push(`スタンプ ${newStamp}`);return a.length?`<br>📖 ずかん：${a.join("・")}`:""}
+let ztab="k",zFrom=null,zrad="all";
+const MODE_STAMPS=[[1,"Busyu","けした","#2F80D0"],[2,"Dosu","つんだ","#8B5A2B"],[4,"Kururi","たおした","#C8402E"]];
 function openZukan(from){zFrom=from;cv.style.visibility=from==="home"?"hidden":"visible";$("homeIcon").hidden=from==="home";$(from).hidden=true;$("zukan").hidden=false;$("zcard").hidden=true;buildZukan()}
 function buildZukan(){
-  const tabs=[["k","漢字",ALL_KANJI],["w","熟語",DOSU_JUKUGO],["i","四字熟語",IDIOMS]];
+  const tabs=[["k",`<ruby>漢字<rt>かんじ</rt></ruby>`,ALL_KANJI],["w",`<ruby>熟語<rt>じゅくご</rt></ruby>`,DOSU_JUKUGO],["i",`<ruby>四字熟語<rt>よじじゅくご</rt></ruby>`,IDIOMS]];
   const total=tabs.reduce((s,t)=>s+t[2].length,0),got=tabs.reduce((s,t)=>s+t[2].filter(x=>ZK[t[0]][x]).length,0);
-  $("zkCount").textContent=`あつめた数 ${got} / ${total}`;
+  const done=ALL_KANJI.filter(k=>lvOf(k)===3).length;
+  $("zkCount").innerHTML=`出会った数 ${got} / ${total}　<b style="color:var(--gold)">★かんせい ${done} / ${ALL_KANJI.length}</b>`;
   const tb=$("ztabs");tb.innerHTML="";
   for(const [id,name,list] of tabs){const b=document.createElement("button");b.setAttribute("aria-pressed",id===ztab);
     b.innerHTML=`${name}<small>${list.filter(x=>ZK[id][x]).length}/${list.length}</small>`;b.onclick=()=>{ztab=id;$("zcard").hidden=true;buildZukan()};tb.appendChild(b)}
-  const list=tabs.find(t=>t[0]===ztab)[2],grid=$("zgrid");grid.innerHTML="";grid.className="zgrid"+(ztab==="k"?"":" words");
+  // radical filter (kanji tab only)
+  const rb=$("zrads");rb.innerHTML="";rb.hidden=ztab!=="k";
+  if(ztab==="k"){
+    const opts=[["all","ぜんぶ",null,ALL_KANJI],...RADICALS.map(r=>[r.sym,r.sym,r.color,r.all]),["oj","おじゃま",null,OJAMA]];
+    for(const [id,label,color,ks] of opts){const b=document.createElement("button");b.setAttribute("aria-pressed",id===zrad);
+      const fin=ks.filter(k=>lvOf(k)===3).length;
+      b.innerHTML=`<span${color?` style="color:${color}"`:""}>${label}</span><small>${fin}/${ks.length}</small>`;
+      if(color){const r=RADICALS.find(x=>x.sym===id);b.title=r.name;b.setAttribute("aria-label",r.name)}
+      b.onclick=()=>{zrad=id;$("zcard").hidden=true;buildZukan()};rb.appendChild(b)}
+  }
+  let list=tabs.find(t=>t[0]===ztab)[2];
+  if(ztab==="k"&&zrad!=="all")list=zrad==="oj"?OJAMA:(RADICALS.find(r=>r.sym===zrad)||{all:[]}).all;
+  const grid=$("zgrid");grid.innerHTML="";grid.className="zgrid"+(ztab==="k"?"":" words");
   for(const x of list){const b=document.createElement("button");const has=ZK[ztab][x];
-    if(has){b.textContent=x;b.style.fontFamily=`${F.family},${FALLBACK}`;b.onclick=()=>showCard(x)}
+    if(has){
+      if(ztab==="k"){const v=ZK.c[x]|0;b.className="lv"+lvOf(x);
+        b.innerHTML=`<span class="zg" style="font-family:${F.family},${FALLBACK}">${x}</span><span class="zd">${MODE_STAMPS.map(([bit,,,c])=>`<i class="${v&bit?"on":""}" style="--c:${c}"></i>`).join("")}</span>`}
+      else{b.textContent=x;b.style.fontFamily=`${F.family},${FALLBACK}`}
+      b.onclick=()=>showCard(x)}
     else{b.textContent="？";b.className="un";b.setAttribute("aria-label","まだ出会っていない");b.disabled=true}
     grid.appendChild(b)}
 }
@@ -1396,7 +1449,9 @@ function showCard(x){
   const c=$("zcard");c.hidden=false;
   if(ztab==="k"){const d=KDATA[x];
     say(readingOf(x),true);
-    c.innerHTML=`<span class="zk" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p class="big2">${readingOf(x)}</p><p>音：${d.on}　訓：${d.kun}</p><p class="m">意味：${d.mean}</p><p class="m">${d.rad?`部首：${d.rad}　`:"お邪魔字　"}${gradeName(d.g)}</p></div>`}
+    c.innerHTML=`<span class="zk" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p class="big2">${readingOf(x)}</p><p>おん：${d.on}　くん：${d.kun}</p><p class="m">いみ：${d.mean}</p><p class="m">${d.rad?`ぶしゅ：${d.rad}　`:"おじゃま字　"}${gradeName(d.g)}</p>
+      <p class="stamps">${MODE_STAMPS.map(([bit,m,act,col])=>`<span class="${(ZK.c[x]|0)&bit?"on":""}" style="--c:${col}">${m}<br><small>${act}</small></span>`).join("")}</p>
+      <p class="m">${lvOf(x)===3?"★ かんせい！":`のこり ${3-lvOf(x)}つで かんせい`}</p></div>`}
   else{const d=WORDS[x];say(d.yomi,true);
     c.innerHTML=`<span class="zk w" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p>${d.yomi}</p><p class="m">${d.mean}</p></div>`}
   c.scrollIntoView({block:"nearest"});

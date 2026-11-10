@@ -89,14 +89,18 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .themes button{font:inherit;font-size:.78rem;font-weight:700;padding:5px 10px;border-radius:999px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
 .themes button[aria-pressed="true"]{background:var(--ink);color:var(--field);border-color:var(--ink)}
 </style>
-<script>try{const t=localStorage.getItem("bd-theme")||"pop";if(t!=="auto")document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="pop"}</script>
+<script>(function(){ // theme: from the link (?theme=) first, then saved setting, else pop
+  let t=null;try{t=new URLSearchParams(location.search).get("theme")}catch(e){}
+  try{if(t)localStorage.setItem("bd-theme2",t);else t=localStorage.getItem("bd-theme2")}catch(e){}
+  t=t||"pop";window.__theme=t;if(t!=="auto")document.documentElement.dataset.theme=t;
+})()</script>
 
 </head>
 <body>
 <div class="top">
   <button class="icon" id="backBtn">← ホーム</button>
   <h1>Kuru<span>ri</span></h1>
-  <div style="display:flex;gap:6px"><button class="icon" id="voiceBtn" aria-label="読み上げ">🗣️</button><button class="icon" id="sfxBtn" aria-label="効果音">🔊</button></div>
+  <div style="display:flex;gap:6px"><button class="icon" id="voiceBtn" aria-label="読み上げ">🗣️</button><button class="icon" id="sfxBtn" aria-label="こうかおん">🔊</button></div>
 </div>
 <div class="stage" id="stage">
   <canvas id="cv"></canvas>
@@ -106,29 +110,30 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
   <div class="overlay" id="menu">
     <h2>Kuru<span style="color:var(--shu)">ri</span></h2>
-    <p>漢字をコマのように回して土俵にうちだそう。字の形どうしがぶつかって引っかかるよ。はじき出すか先に止まらせたら勝ち、3回勝負で2勝したほうの勝利！</p>
+    <p><ruby>漢字<rt>かんじ</rt></ruby>を コマのように 回して 土ひょうに うちだそう。字の 形どうしが ぶつかって ひっかかるよ。はじき出すか 先に 止まらせたら かち。3回 たたかって 2回 かったほうの かち！</p>
     <div class="label">あそびかた</div>
-    <div class="seg" id="modeSeg"><button data-v="cpu">ひとりで<small>コンピューターと</small></button><button data-v="vs">ふたりで<small>1台で交互に</small></button></div>
+    <div class="seg" id="modeSeg"><button data-v="cpu">ひとりで<small>コンピューターと</small></button><button data-v="vs">ふたりで<small>1台で こうたいに</small></button></div>
     <div id="lvBox"><div class="label">コンピューターの強さ</div>
       <div class="seg" id="lvSeg"><button data-v="1">よわい</button><button data-v="2">ふつう</button><button data-v="3">つよい</button></div></div>
-    <div class="label">漢字の範囲</div>
+    <div class="label"><ruby>漢字<rt>かんじ</rt></ruby>のはんい</div>
     <div class="seg" id="grSeg"></div>
     <div class="label">フィールド</div>
     <div class="seg" id="fieldSeg"></div>
-    <p class="chart">ぞくせいの相性：🌳き → ⛰️つち → 💧みず → 🔥ひ → ⚙️きん → 🌳き（矢印の先に強い）<br>⚪むぞくせい：にがても とくいも なし</p>
+    <p class="chart">ぞくせいの あいしょう：🌳き → ⛰️つち → 💧みず → 🔥ひ → ⚙️きん → 🌳き（やじるしの 先に 強い）<br>⚪むぞくせい：にがても とくいも なし</p>
     <div class="btns"><button class="go" id="startBtn">はじめる</button><button class="sub" id="menuHome">ホーム</button></div>
+    <div class="themes" id="themes" role="group" aria-label="がめんの色"></div>
   </div>
 
   <div class="overlay" id="pick" hidden>
     <span class="who" id="pickWho"></span>
-    <p>コマにする漢字をえらぼう。字が大きくて画数が多いほど重く、少ないほど速い。</p>
+    <p>コマにする <ruby>漢字<rt>かんじ</rt></ruby>を えらぼう。字の 線が 多いほど おもくて 強く、少ないほど はやいよ。</p>
     <div class="cards" id="cards"></div>
     <button class="go" id="pickOk" disabled>これにする</button>
   </div>
 
   <div class="overlay" id="quiz" hidden>
     <span class="who" id="quizWho"></span>
-    <p>よみクイズ！正解すると回転パワーアップ</p>
+    <p>よみクイズ！ せいかいすると かいてんパワー アップ</p>
     <div class="quizk" id="quizK"></div>
     <div class="choices" id="choices"></div>
     <p id="quizMsg" style="min-height:1.6em;font-weight:900;color:var(--ink)"></p>
@@ -141,7 +146,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
   <div class="overlay" id="result" hidden>
     <h2 id="resTitle"></h2>
     <p id="resDetail" style="font-size:1rem;color:var(--ink)"></p>
-    <div class="btns"><button class="go" id="againBtn">もう一回</button><button class="sub" id="menuBtn">設定</button></div>
+    <div class="btns"><button class="go" id="againBtn">もう一回</button><button class="sub" id="menuBtn">せってい</button></div>
   </div>
 </div>
 <script src="matter.min.js"></script>
@@ -161,10 +166,10 @@ const RAD_SRC=[
 決|3|ケツ|き(める)|きめる
 港|3|コウ|みなと|みなと
 温|3|オン|あたた(かい)|あたたかい
-漢|3|カン|—|中国の古い国の名・おとこ
+漢|3|カン|—|中国のこと・かんじの「かん」
 油|3|ユ|あぶら|あぶら
 洗|6|セン|あら(う)|あらう
-澤|7|タク|さわ|さわ（沢の古い字）`],
+澤|7|タク|さわ|さわ（「沢」の古い書き方）`],
  ["木","きへん","#8B5A2B","h.38",`木|1|モク・ボク|き|き|w
 本|1|ホン|もと|ほん・もと|w
 森|1|シン|もり|もり|w
@@ -189,7 +194,7 @@ const RAD_SRC=[
 使|3|シ|つか(う)|つかう
 仕|3|シ・ジ|つか(える)|つかえる
 便|4|ベン・ビン|たよ(り)|べんり・たより
-位|4|イ|くらい|くらい・いる場所
+位|4|イ|くらい|くらい・いるばしょ
 信|4|シン|—|しんじる
 例|4|レイ|たと(える)|たとえ
 値|6|チ|ね・あたい|ねだん・あたい`],
@@ -197,11 +202,11 @@ const RAD_SRC=[
 草|1|ソウ|くさ|くさ
 茶|2|チャ・サ|—|おちゃ
 薬|3|ヤク|くすり|くすり
-葉|3|ヨウ|は|は（植物の）
+葉|3|ヨウ|は|は（しょくぶつの）
 落|3|ラク|お(ちる)|おちる
 苦|3|ク|くる(しい)・にが(い)|くるしい・にがい
 荷|3|カ|に|にもつ
-芽|4|ガ|め|め（植物の）
+芽|4|ガ|め|め（しょくぶつの）
 菜|4|サイ|な|な・やさい
 英|4|エイ|—|すぐれる・イギリス
 若|6|ジャク|わか(い)|わかい`],
@@ -280,7 +285,7 @@ const RAD_SRC=[
 管|4|カン|くだ|くだ
 筋|6|キン|すじ|すじ
 簡|6|カン|—|てがる・かんたん
-箸|7|—|はし|はし（食事の）`],
+箸|7|—|はし|はし（ごはんを食べる）`],
  ["日","ひへん","#F2B705","h.33~16",`日|1|ニチ・ジツ|ひ|ひ・おひさま|w
 早|1|ソウ|はや(い)|はやい|k.5
 星|2|セイ|ほし|ほし|k.5
@@ -299,7 +304,7 @@ const RAD_SRC=[
 銀|3|ギン|—|ぎん
 鏡|4|キョウ|かがみ|かがみ
 録|4|ロク|—|かきしるす
-銅|5|ドウ|—|どう（金属）
+銅|5|ドウ|—|どう（きんぞく）
 針|6|シン|はり|はり
 鋼|6|コウ|はがね|はがね
 鉛|7|エン|なまり|なまり
@@ -323,7 +328,7 @@ const RAD_SRC=[
 姉|2|シ|あね|あね
 始|3|シ|はじ(める)|はじめる
 好|4|コウ|す(き)|すき・このむ
-媛|4|エン|ひめ|ひめ（愛媛）
+媛|4|エン|ひめ|ひめ（えひめけんの「媛」）
 姓|7|セイ・ショウ|—|みょうじ
 婚|7|コン|—|けっこん
 娘|7|—|むすめ|むすめ
@@ -388,68 +393,68 @@ const BWORD_SRC=`茶室|ちゃしつ|茶道をする部屋
 計算|けいさん|数をかぞえて答えを出すこと
 説明|せつめい|わかるように話すこと
 調節|ちょうせつ|ちょうどよくととのえること
-談笑|だんしょう|笑いながら話すこと
+談笑|だんしょう|わらいながら 話すこと
 筆記|ひっき|書きとること
-細流|さいりゅう|細い川の流れ
-結婚|けっこん|夫婦になること
-緑茶|りょくちゃ|緑色の日本茶
+細流|さいりゅう|細い 川のながれ
+結婚|けっこん|ふうふに なること
+緑茶|りょくちゃ|みどり色の 日本の お茶
 持続|じぞく|長くつづくこと
-指定|してい|これと決めること
-寒波|かんぱ|はげしい寒さがやってくること
-通信|つうしん|知らせを伝えること
-送信|そうしん|データなどを送ること
-遊泳|ゆうえい|泳ぐこと
-返信|へんしん|返事を送ること
-時計|とけい|時刻をはかる道具
-暖流|だんりゅう|あたたかい海の流れ
-鉄橋|てっきょう|鉄でできた橋
-始終|しじゅう|始めから終わりまで・いつも
-体温|たいおん|体の温度
-作詩|さくし|詩をつくること
+指定|してい|これと きめること
+寒波|かんぱ|とても さむい 空気が やってくること
+通信|つうしん|しらせを つたえること
+送信|そうしん|メールなどを おくること
+遊泳|ゆうえい|およぐこと
+返信|へんしん|へんじを おくること
+時計|とけい|時こくを はかる どうぐ
+暖流|だんりゅう|あたたかい 海の ながれ
+鉄橋|てっきょう|てつで できた はし
+始終|しじゅう|はじめから おわりまで・いつも
+体温|たいおん|体の おんど
+作詩|さくし|しを 作ること
 苦笑|くしょう|にがわらい
 英語|えいご|イギリスやアメリカなどのことば
 林道|りんどう|林の中の道
 村道|そんどう|村の道
-温暖|おんだん|気候があたたかいこと
-決定|けってい|はっきり決めること
-流通|りゅうつう|品物が世の中に出回ること
-洗練|せんれん|あかぬけて上品になること
-油絵|あぶらえ|油絵の具でかいた絵
+温暖|おんだん|気こうが あたたかいこと
+決定|けってい|はっきり きめること
+流通|りゅうつう|しなものが 世の中に 出まわること
+洗練|せんれん|あかぬけて じょうひんに なること
+油絵|あぶらえ|あぶらの えのぐで かいた 絵
 何時|なんじ|何時ごろか
-作家|さっか|小説などを書く人
-寒暖|かんだん|寒さとあたたかさ
-定時|ていじ|決まった時刻
-宝箱|たからばこ|宝物を入れる箱
-運休|うんきゅう|電車やバスが運転を休むこと
+作家|さっか|お話などを 書く人
+寒暖|かんだん|さむさと あたたかさ
+定時|ていじ|きまった 時こく
+宝箱|たからばこ|たからものを 入れる はこ
+運休|うんきゅう|電車や バスが お休みすること
 達筆|たっぴつ|字が上手なこと
-近海|きんかい|陸に近い海
+近海|きんかい|りくに 近い 海
 速記|そっき|すばやく書きとること
-等級|とうきゅう|ランク・段階
-晩婚|ばんこん|年をとってからの結婚
-時速|じそく|1時間に進むきょり
+等級|とうきゅう|ランク・だんかい
+晩婚|ばんこん|年を とってからの けっこん
+時速|じそく|1時間に すすむ きょり
 暗記|あんき|そらでおぼえること
-銅線|どうせん|銅でできた線
-鉄道|てつどう|線路の上を走る乗り物
-針葉|しんよう|針のように細い葉
-喫茶|きっさ|お茶を飲むこと
-折紙|おりがみ|紙を折っていろいろな形を作る遊び
-給油|きゅうゆ|燃料を入れること
-紙箱|かみばこ|紙でできた箱
-訓練|くんれん|くり返し練習してきたえること
+銅線|どうせん|どうで できた 線
+鉄道|てつどう|線ろの 上を 走る のりもの
+針葉|しんよう|はりのように 細い は
+喫茶|きっさ|お茶を のむこと
+折紙|おりがみ|紙を おって いろいろな 形を 作る あそび
+給油|きゅうゆ|ねんりょうを 入れること
+紙箱|かみばこ|紙で できた はこ
+訓練|くんれん|くりかえし れんしゅうして きたえること
 男子|だんし|男の子
 女子|じょし|女の子
 大木|たいぼく|大きな木
 本日|ほんじつ|きょう
 早口|はやくち|話すのがはやいこと
-人口|じんこう|そこに住む人の数
+人口|じんこう|そこに すむ 人の 数
 十字|じゅうじ|十の字の形
 王子|おうじ|王さまの男の子ども
 大人|おとな|一人前になった人
 日本|にほん|わたしたちの国
 一本|いっぽん|一つの細長いもの
 三日|みっか|月の三番目の日・三日間
-天下|てんか|世の中ぜんたい
-村人|むらびと|村に住む人
+天下|てんか|世の中 ぜんたい
+村人|むらびと|村に すむ 人
 休日|きゅうじつ|休みの日
 十人|じゅうにん|十の人
 大王|だいおう|王さまの中の王さま
@@ -463,48 +468,48 @@ const BWORD_SRC=`茶室|ちゃしつ|茶道をする部屋
 雨水|あまみず|雨の水
 竹林|ちくりん|竹の林
 水田|すいでん|水をはった田んぼ
-木星|もくせい|太陽系でいちばん大きい星
+木星|もくせい|たいようけいで いちばん 大きい 星
 金星|きんせい|明けの明星・よいの明星
-土星|どせい|輪のある星
+土星|どせい|わの ある 星
 十日|とおか|月の十番目の日・十日間
 七日|なのか|月の七番目の日・七日間
 女王|じょおう|女の王さま
-手紙|てがみ|人に送る文
+手紙|てがみ|人に おくる 文
 南口|みなみぐち|南がわの出入り口
 大地|だいち|広い土地
-番地|ばんち|住所の番号
+番地|ばんち|じゅうしょの 番ごう
 名字|みょうじ|家の名前
 日記|にっき|毎日のできごとを書いたもの`;
 const DWORD_SRC=`花火|はなび|火薬で光や音を楽しむもの
 読書|どくしょ|本を読むこと
-電車|でんしゃ|電気で線路を走る乗り物
-学校|がっこう|勉強をするところ
+電車|でんしゃ|電気で 線ろを 走る のりもの
+学校|がっこう|べんきょうを する ところ
 青空|あおぞら|晴れた青い空
-友達|ともだち|仲のよい人
+友達|ともだち|なかの よい 人
 時間|じかん|時の長さ
-音楽|おんがく|音でつくる芸術
+音楽|おんがく|音で つくる げいじゅつ
 天気|てんき|空のようす
-地図|ちず|土地のようすを表した図
-新聞|しんぶん|ニュースをのせた印刷物
-漢字|かんじ|中国から伝わった文字
-野菜|やさい|食べるために育てる草
+地図|ちず|土地の ようすを あらわした 図
+新聞|しんぶん|ニュースを のせた いんさつぶつ
+漢字|かんじ|中国から つたわった 文字
+野菜|やさい|食べるために そだてる 草
 図書|としょ|本
 雪山|ゆきやま|雪がつもった山
-夕日|ゆうひ|夕方の太陽`;
+夕日|ゆうひ|夕方の 太よう`;
 const IDIOM_SRC=`一石二鳥|いっせきにちょう|一つのことで二つの得をすること
-十人十色|じゅうにんといろ|考えや好みは人それぞれちがうこと
-一期一会|いちごいちえ|一生に一度の出会いを大切にすること
-温故知新|おんこちしん|昔のことを学んで新しい知識を得ること
-花鳥風月|かちょうふうげつ|自然の美しい景色
-以心伝心|いしんでんしん|言葉にしなくても心が通じ合うこと
-晴耕雨読|せいこううどく|晴れたら畑仕事、雨なら読書というのんびりした暮らし
-七転八起|しちてんはっき|何度失敗してもくじけず立ち上がること
-起承転結|きしょうてんけつ|物語や文章の組み立て方
+十人十色|じゅうにんといろ|考えや すきなものは 人それぞれ ちがうこと
+一期一会|いちごいちえ|一生に 一どの 出会いを 大切にすること
+温故知新|おんこちしん|むかしのことを 学んで 新しいことを 知ること
+花鳥風月|かちょうふうげつ|しぜんの 美しい けしき
+以心伝心|いしんでんしん|ことばに しなくても 心が 通じあうこと
+晴耕雨読|せいこううどく|晴れたら はたけしごと、雨なら 読書という のんびりした くらし
+七転八起|しちてんはっき|何ども しっぱいしても くじけず 立ち上がること
+起承転結|きしょうてんけつ|お話や 文の 組み立て方
 自画自賛|じがじさん|自分で自分をほめること
 千差万別|せんさばんべつ|いろいろなちがいがあること
-臨機応変|りんきおうへん|その場に合わせてうまく対応すること
-一心同体|いっしんどうたい|心も体も一つのように強く結びつくこと
-試行錯誤|しこうさくご|失敗をくり返しながら正しいやり方を見つけること`;
+臨機応変|りんきおうへん|その場に 合わせて うまく 動くこと
+一心同体|いっしんどうたい|心も 体も 一つのように 強く むすびつくこと
+試行錯誤|しこうさくご|しっぱいを くりかえしながら 正しい やり方を 見つけること`;
 
 const KDATA={};
 // region codes (where the radical sits, as fractions of the character box):
@@ -580,6 +585,15 @@ function statsOf(k){
 }
 const starStr=n=>"★".repeat(n)+"☆".repeat(5-n);
 
+// ================= zukan (shared with Busyu/Dosu through the same storage) =================
+let ZK;try{ZK=JSON.parse(store("bd-zukan")||"{}")}catch(e){ZK={}}
+ZK.k=ZK.k||{};ZK.w=ZK.w||{};ZK.i=ZK.i||{};ZK.c=ZK.c||{};
+function zkSave(){store("bd-zukan",JSON.stringify(ZK))}
+function zkSeen(k){if(KDATA[k]&&!ZK.k[k]){ZK.k[k]=1;zkSave()}}
+// beating a kanji in Kururi gives it the Kururi stamp (4)
+function zkBeat(k){if(!KDATA[k])return false;zkSeen(k);const v=ZK.c[k]|0;if(v&4)return false;ZK.c[k]=v|4;zkSave();return true}
+const zkLv=k=>{const v=ZK.c[k]|0;return(v&1)+(v>>1&1)+(v>>2&1)};
+
 // ================= sound & voice =================
 let actx=null,sfxOn=store("km-sfx")!=="0",voiceOn=store("bd-voice")!=="0";
 function ac(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(actx.state==="suspended")actx.resume();return actx}
@@ -618,7 +632,14 @@ let asking=false;
 function ask(msg,yes){asking=true;$("askMsg").textContent=msg;$("ask").hidden=false;
   $("askYes").onclick=()=>{asking=false;$("ask").hidden=true;yes()};
   $("askNo").onclick=()=>{asking=false;$("ask").hidden=true}}
-function goHomePage(){location.href="index.html"}
+let beaten=[];
+function curTheme(){return store("bd-theme2")||window.__theme||"pop"}
+function goHomePage(){location.href="index.html?theme="+curTheme()+(beaten.length?"&beat="+encodeURIComponent(beaten.join(",")):"")}
+const THEMES=[["pop","🎈 ポップ"],["light","☀️ あかるい"],["dark","🌙 くらい"],["auto","📱 じどう"]];
+function applyTheme(t){window.__theme=t;store("bd-theme2",t);if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;readCols()}
+function buildThemes(){const cur=curTheme(),el=$("themes");el.innerHTML="";
+  for(const [id,name] of THEMES){const b=document.createElement("button");b.textContent=name;b.setAttribute("aria-pressed",id===cur);
+    b.onclick=()=>{applyTheme(id);buildThemes()};el.appendChild(b)}}
 $("backBtn").onclick=()=>{if(phase!=="menu"&&phase!=="end")ask("ゲームをやめてホームにもどりますか？",goHomePage);else goHomePage()};
 $("menuHome").onclick=goHomePage;
 
@@ -627,15 +648,15 @@ const WW=360,WH=600,CX=180,CY=300,TR=26,RIM=6.6,S0=58;
 let R=158;
 const START={A:{x:CX,y:CY+100},B:{x:CX,y:CY-100}};
 const FIELDS=[
-  {id:"normal",name:"ふつう",icon:"⭕",R:158,desc:"まるい土俵"},
-  {id:"gap",name:"すきま",icon:"◔",R:158,gaps:true,desc:"ふちが2か所ない"},
-  {id:"pillar",name:"はしら",icon:"🗿",R:158,pillars:true,desc:"下から棒が出てくる"},
-  {id:"swirl",name:"うずまき",icon:"🌀",R:158,swirl:true,desc:"床がぐるぐる流れる"},
-  {id:"small",name:"せまい",icon:"🔸",R:122,desc:"小さな土俵"},
+  {id:"normal",name:"ふつう",icon:"⭕",R:158,desc:"まるい 土ひょう"},
+  {id:"gap",name:"すきま",icon:"◔",R:158,gaps:true,desc:"ふちが 2つ ない"},
+  {id:"pillar",name:"はしら",icon:"🗿",R:158,pillars:true,desc:"下から ぼうが 出てくる"},
+  {id:"swirl",name:"うずまき",icon:"🌀",R:158,swirl:true,desc:"ゆかが ぐるぐる ながれる"},
+  {id:"small",name:"せまい",icon:"🔸",R:122,desc:"小さな 土ひょう"},
   {id:"shrink",name:"ちぢむ",icon:"⏬",R:158,shrink:true,desc:"だんだん小さくなる"},
   {id:"ice",name:"こおり",icon:"🧊",R:158,ice:true,desc:"つるつるすべる"},
   {id:"spring",name:"ばね",icon:"〰️",R:158,spring:true,desc:"ふちで強くはねかえる"},
-  {id:"bar",name:"まわるぼう",icon:"🔄",R:158,bar:true,desc:"まん中で棒が回る"},
+  {id:"bar",name:"まわるぼう",icon:"🔄",R:158,bar:true,desc:"まん中で ぼうが 回る"},
   {id:"random",name:"おまかせ",icon:"🎲",desc:"毎ラウンドかわる"},
 ];
 let fieldSel=store("km-field")||"normal",FIELD=FIELDS[0],gaps=[],pillars=[],pillarT=0,bar=null,barAng=0;
@@ -690,7 +711,7 @@ const pool=()=>Object.keys(KDATA).filter(k=>KDATA[k].grp&&KDATA[k].g<=grade);
 // ================= menu =================
 function seg(id,val,items,set){const el=$(id);el.innerHTML="";for(const [v,label] of items){const b=document.createElement("button");b.innerHTML=label;b.setAttribute("aria-pressed",String(v)===String(val));b.onclick=()=>{set(v);buildMenu()};el.appendChild(b)}}
 function buildMenu(){
-  seg("modeSeg",mode,[["cpu","ひとりで<small>コンピューターと</small>"],["vs","ふたりで<small>1台で交互に</small>"]],v=>{mode=v;store("km-mode",v)});
+  seg("modeSeg",mode,[["cpu","ひとりで<small>コンピューターと</small>"],["vs","ふたりで<small>1台で こうたいに</small>"]],v=>{mode=v;store("km-mode",v)});
   seg("lvSeg",lv,[[1,"よわい"],[2,"ふつう"],[3,"つよい"]],v=>{lv=+v;store("km-lv",v)});
   seg("grSeg",grade,GR.map(g=>[g.g,g.name]),v=>{grade=+v;store("bd-grade",v)});
   seg("fieldSeg",fieldSel,FIELDS.map(f=>[f.id,`${f.icon} ${f.name}<small>${f.desc}</small>`]),v=>{fieldSel=v;store("km-field",v)});
@@ -717,7 +738,7 @@ function drawPick(who){
   show("pick",mode==="vs"&&who==="B");
 }
 $("pickOk").onclick=()=>{
-  P[pickWho].k=pickSel;
+  P[pickWho].k=pickSel;zkSeen(pickSel);
   if(pickWho==="A"){if(mode==="cpu"){cpuPick();startRound()}else drawPick("B")}else startRound();
 };
 function cpuPick(){
@@ -742,7 +763,7 @@ function drawQuiz(who){
     b.onclick=()=>{if(box.dataset.done)return;box.dataset.done=1;const ok=o===ans;
       b.classList.add(ok?"ok":"ng");if(!ok)[...box.children].find(c=>c.textContent===ans).classList.add("ok");
       P[who].bonus=ok;sfx(ok?"ok":"ng");say(ans);
-      $("quizMsg").textContent=ok?"せいかい！回転パワーアップ！":`ざんねん、「${ans}」でした`;
+      $("quizMsg").textContent=ok?"せいかい！ かいてんパワー アップ！":`ざんねん、「${ans}」でした`;
       setTimeout(afterQuiz,1300)};
     box.appendChild(b)}
   delete box.dataset.done;
@@ -773,7 +794,7 @@ function startRound(){
 function beginAim(who){
   phase="aim"+who;drag=null;
   if(isCPU(who)){cpuAim();return}
-  banner(who==="A"?(mode==="cpu"?"ねらいを決めよう":"Aがねらう"):"Bがねらう",who==="A"?COL.shu:COL.ai,who==="B"&&mode==="vs");
+  banner(who==="A"?(mode==="cpu"?"ねらいを きめよう":"Aがねらう"):"Bがねらう",who==="A"?COL.shu:COL.ai,who==="B"&&mode==="vs");
   $("confirm").hidden=true;$("confirm").classList.toggle("topside",who==="B");
 }
 function cpuAim(){
@@ -901,9 +922,12 @@ function updatePillars(dt){
 function endRound(w,why){
   roundOver=true;$("spA").hidden=true;$("spB").hidden=true;
   const name=x=>x==="A"?(mode==="cpu"?"あなた":"A"):(mode==="cpu"?"コンピューター":"B");
-  if(w){wins[w]++;banner(`${name(w)}の勝ち！`,w==="A"?COL.shu:COL.ai,w==="B"&&mode==="vs");
+  if(w){wins[w]++;banner(`${name(w)}のかち！`,w==="A"?COL.shu:COL.ai,w==="B"&&mode==="vs");
     const l=w==="A"?"B":"A";
-    setTimeout(()=>banner(why==="out"?`${tops[l].k} はじき出し！`:why==="time"?"回転の多いほうの勝ち":`${tops[l].k} がとまった`,COL.ink),900)}
+    // only a human's win stamps the beaten kanji
+    if(!isCPU(w)&&!beaten.includes(tops[l].k))beaten.push(tops[l].k);
+    if(!isCPU(w)&&zkBeat(tops[l].k))setTimeout(()=>banner(zkLv(tops[l].k)===3?`「${tops[l].k}」ずかん かんせい！★`:`📖「${tops[l].k}」に Kururiスタンプ！`,COL.gold),1700);
+    setTimeout(()=>banner(why==="out"?`${tops[l].k} はじき出し！`:why==="time"?"かいてんの 多いほうの かち":`${tops[l].k} がとまった`,COL.ink),900)}
   else banner("ひきわけ！",COL.ink);
   setTimeout(()=>{
     if(wins.A>=2||wins.B>=2)matchEnd();else startRound();
@@ -912,8 +936,8 @@ function endRound(w,why){
 function matchEnd(){
   phase="end";const w=wins.A>wins.B?"A":"B";sfx("win");
   const winK=tops[w].k;
-  $("resTitle").textContent=mode==="cpu"?(w==="A"?"あなたの勝ち！":"コンピューターの勝ち"):`${w}の勝ち！`;
-  $("resDetail").innerHTML=`${wins.A} － ${wins.B}<br>勝ったコマ「${winK}」（${readingOf(winK)}）<br><small>${KDATA[winK].mean}</small>`;
+  $("resTitle").textContent=mode==="cpu"?(w==="A"?"あなたのかち！":"コンピューターのかち"):`${w}のかち！`;
+  $("resDetail").innerHTML=`${wins.A} － ${wins.B}<br>かったコマ「${winK}」（${readingOf(winK)}）<br><small>${KDATA[winK].mean}</small>`;
   say(readingOf(winK));
   if(mode==="cpu"&&w==="A"){const k="km-wins-"+lv;store(k,(+store(k)||0)+1)}
   show("result",mode==="vs"&&w==="B");
@@ -1032,7 +1056,7 @@ function loop(ts){
 }
 addEventListener("resize",resize);
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-readCols();resize();buildMenu();syncBtns();
+readCols();resize();buildMenu();syncBtns();buildThemes();
 document.fonts&&document.fonts.load(`900 40px "Zen Maru Gothic"`,"漢字");
 last=performance.now();requestAnimationFrame(loop);
 </script>
