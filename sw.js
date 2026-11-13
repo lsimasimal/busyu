@@ -1,6 +1,6 @@
 // Stores every file on first visit so the game runs offline afterwards.
 // When you update the game, change the version below (busyu-v2, v3, ...).
-const CACHE = "busyu-v12";
+const CACHE = "busyu-v19";
 const FILES = ["./", "index.html", "koma.html", "fonts.css", "matter.min.js", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

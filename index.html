@@ -41,7 +41,7 @@ h1 span{color:var(--shu)}
 .icon[hidden]{display:none}
 .stat{text-align:right;font-variant-numeric:tabular-nums}
 .stat b{font-size:1.6rem;font-weight:900}
-.stat small{display:block;color:var(--muted);font-size:.72rem}
+.stat small{display:block;color:var(--muted);font-size:.72rem;white-space:nowrap}
 .stage{position:relative;flex:1;min-height:0;width:100%;max-width:440px;display:flex;justify-content:center}
 canvas{display:block;height:100%;max-width:100%;touch-action:none;border-radius:14px}
 .legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;max-width:440px;min-height:30px}
@@ -143,9 +143,20 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .zgrid button.lv2{background:#DDF0FF;border-color:#6FB3EE;color:#2A2620}
 .zgrid button.lv3{background:linear-gradient(135deg,#FFE58A,#FFC83D);border-color:#E0A100;color:#5A3D00;box-shadow:0 2px 0 #E0A100}
 .zgrid button.lv3::after{content:"★";position:absolute;top:2px;right:4px;font-size:.62rem;color:#B07800}
-.zrads{width:100%;max-width:400px;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}
-.zrads button{min-width:44px;flex:0 0 auto;font-size:1.05rem;padding:4px 8px}
-.zrads[hidden],.seg[hidden]{display:none}
+#zukan>*{flex-shrink:0}
+.zradwrap{width:100%;max-width:420px;display:flex;align-items:center;gap:4px}
+.zradwrap:has(.zrads[hidden]){display:none}
+.zarrow{flex:0 0 28px;height:46px;border:none;border-radius:10px;background:var(--field);color:var(--muted);font-size:.8rem;cursor:pointer}
+.zrads{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:4px 2px 8px;overscroll-behavior-x:contain;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;cursor:grab;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%)}
+.zrads[hidden]{display:none}
+.zrads button{flex:0 0 50px;scroll-snap-align:start}
+.zrads button.wide{flex-basis:auto;padding:4px 10px!important}
+.zrads button{font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:4px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.zrads button b{font-size:1.25rem;font-weight:900}
+.zrads button small{font-size:.6rem;font-weight:700;color:var(--muted)}
+.zrads button[aria-pressed="true"]{border-color:var(--shu);background:var(--shu);color:#fff}
+.zrads button[aria-pressed="true"] small{color:#fff}
 .stamps{display:flex;gap:6px;margin:6px 0 2px!important}
 .stamps span{font-size:.72rem;font-weight:900;text-align:center;padding:4px 8px;border-radius:10px;border:2px dashed var(--line);color:var(--muted);line-height:1.3}
 .stamps span.on{border:2px solid var(--c);background:var(--c);color:#fff}
@@ -202,6 +213,8 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
     <div class="opts" id="busyuOpts">
       <div class="label">出てくる<ruby>部首<rt>ぶしゅ</rt></ruby>の数</div>
       <div class="seg" id="counts"></div>
+      <div class="label">むずかしさ</div>
+      <div class="seg" id="diffs" role="group" aria-label="むずかしさ"></div>
       <label class="toggle"><input type="checkbox" id="hint" checked><ruby>部首<rt>ぶしゅ</rt></ruby>ごとに 色をわける</label>
     </div>
     <div class="label"><ruby>漢字<rt>かんじ</rt></ruby>のはんい</div>
@@ -233,7 +246,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
     <h2 style="font-size:1.6rem"><ruby>漢字<rt>かんじ</rt></ruby><ruby>図鑑<rt>ずかん</rt></ruby></h2>
     <p id="zkCount"></p>
     <div class="seg ztabs" id="ztabs"></div>
-    <div class="seg zrads" id="zrads" role="group" aria-label="ぶしゅでえらぶ"></div>
+    <div class="zradwrap" id="zradWrap"><button class="zarrow" id="zradL" aria-label="ひだりへ">◀</button><div class="zrads" id="zrads" role="group" aria-label="ぶしゅでえらぶ"></div><button class="zarrow" id="zradR" aria-label="みぎへ">▶</button></div>
     <div class="zcard" id="zcard" hidden></div>
     <div class="zgrid" id="zgrid"></div>
     <button class="sub" id="zkClose">とじる</button>
@@ -587,7 +600,24 @@ const DWORD_SRC=`花火|はなび|火薬で光や音を楽しむもの
 野菜|やさい|食べるために そだてる 草
 図書|としょ|本
 雪山|ゆきやま|雪がつもった山
-夕日|ゆうひ|夕方の 太よう`;
+夕日|ゆうひ|夕方の 太よう
+森林|しんりん|木が たくさん 生えている ところ
+草花|くさばな|草や 花
+草木|くさき|草や 木
+手本|てほん|まねをして 学ぶもの
+学力|がくりょく|学んで 身につけた 力
+大学|だいがく|高校の あとに 学ぶ 学校
+上下|じょうげ|上と 下
+土木|どぼく|道や 川などを 作る しごと
+一日|いちにち|朝から 夜まで
+三人|さんにん|人が 三人
+千人|せんにん|人が 千人
+王女|おうじょ|王さまの むすめ
+玉子|たまご|にわとりなどの たまご
+水玉|みずたま|丸い つぶの もよう
+休学|きゅうがく|学校を しばらく 休むこと
+人手|ひとで|はたらく 人の 数
+町人|ちょうにん|むかし 町に すんでいた 人`;
 const IDIOM_SRC=`一石二鳥|いっせきにちょう|一つのことで二つの得をすること
 十人十色|じゅうにんといろ|考えや すきなものは 人それぞれ ちがうこと
 一期一会|いちごいちえ|一生に 一どの 出会いを 大切にすること
@@ -648,7 +678,7 @@ const BSTAGES=[
   {count:3,time:60,goal:"clear",n:15,text:"60びょうで 15こ けす"},
   {count:4,goal:"combo",n:3,text:"3コンボを出す"},
   {count:4,goal:"juku",n:1,chance:.5,text:"じゅくごを 1つ つくる（読める じゅんに よこか たてに ならべて くっつける）"},
-  {count:5,goal:"ojama",n:2,ojama:.2,item:.22,text:"おじゃま字を 2つ けす（ボムで けせる）"},
+  {count:5,goal:"ojama",n:2,ojama:.2,item:.22,text:"どくたいじを 2つ けす（ボムで けせる）"},
   {count:5,time:45,goal:"clear",n:20,text:"45びょうで 20こ けす"},
   {count:6,goal:"score",n:2000,text:"2000点とる"},
   {count:8,hint:false,goal:"clear",n:15,text:"色わけ なしで 15こ けす"},
@@ -779,11 +809,15 @@ function readingOfSpec(spec){
   if(spec.glyphs.length>1)return WORDS[ks]?WORDS[ks].yomi:spec.glyphs.map(g=>readingOf(g.k)).join("・");
   return readingOf(ks);
 }
-function drawReading(spec,x,yTop,bgY){
+function drawReading(spec,x,yTop,bgY,fitTop,fitBottom){
   const r=readingOfSpec(spec);if(!r)return;
-  // big faint reading in the background
-  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.globalAlpha=.09;ctx.fillStyle=COL.ink;
-  let px=Math.min(96,300/Math.max(2,r.length));ctx.font=`900 ${px}px "Zen Maru Gothic",sans-serif`;ctx.fillText(r,WW/2,bgY);
+  // big faint reading; in Busyu it is fitted into the free space between the line and the top of the pile
+  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle=COL.ink;
+  let px=Math.min(96,300/Math.max(2,r.length));
+  if(fitTop!=null){const room=fitBottom-fitTop;px=Math.max(26,Math.min(px,room*.8));bgY=room>=34?(fitTop+fitBottom)/2:fitTop+20}
+  ctx.font=`900 ${px}px "Zen Maru Gothic",sans-serif`;
+  if(fitTop!=null){ctx.globalAlpha=.55;ctx.lineWidth=6;ctx.strokeStyle=COL.field;ctx.strokeText(r,WW/2,bgY)}
+  ctx.globalAlpha=fitTop!=null?.16:.09;ctx.fillText(r,WW/2,bgY);
   // small label above the held kanji
   ctx.globalAlpha=1;ctx.font=`900 16px "Zen Maru Gothic",sans-serif`;
   const w=ctx.measureText(r).width+16,lx=Math.min(Math.max(x,w/2+4),WW-w/2-4);
@@ -888,14 +922,23 @@ function onLand(ev){
 }
 
 // ================= Busyu (clear mode) =================
-const B={L:18,R:342,FLOOR:560,LINE:150,HOLD:78};
+const B={L:18,R:342,FLOOR:560,LINE:190,HOLD:78};
 let active=[],radOf={},jukuList=[],bseq=0,cleared=0,combo=0,maxCombo=0,lastClear=-9,cooldown=0,danger=0,pending=[],
     jukuDone=0,ojamaCleared=0,shakeStock=0,ojamaRate=0,itemRate=0,chanceRate=0,jukuCheckT=0,timeLeft=0;
 const level=()=>1+Math.floor(cleared/12);
+const TA_SEC=180;let taWarn=11;
+let diff=store("busyu-diff")==="hard"?"hard":"normal",sinceEmpty=0,prefilling=false,allClears=0;
+const hardOn=()=>diff==="hard"&&(play==="free"||play==="time");
+const bestKey=c=>(play==="time"?"busyu-ta-":"busyu-best-")+c+(hardOn()?"-h":"");
 function busyuPiece(prev){
   bseq++;
-  if(bseq%7===0&&jukuList.length){const w=jukuList[Math.floor(Math.random()*jukuList.length)];
-    return{glyphs:[{k:w[0],dx:-S0/2,rad:radOf[w[0]]},{k:w[1],dx:S0/2,rad:radOf[w[1]]}],sc:1,kind:"熟語"}}
+  // every 7th piece: a big kanji or a 熟語 (half and half)
+  if(bseq%7===0){
+    if(jukuList.length&&Math.random()<.5){const w=jukuList[Math.floor(Math.random()*jukuList.length)];
+      return{glyphs:[{k:w[0],dx:-S0/2,rad:radOf[w[0]]},{k:w[1],dx:S0/2,rad:radOf[w[1]]}],sc:1,kind:"熟語"}}
+    const r=active[Math.floor(Math.random()*active.length)];
+    return{glyphs:[{k:r.k[Math.floor(Math.random()*r.k.length)],dx:0,rad:r}],sc:1.45,kind:"大"};
+  }
   let ojPool=OJAMA.filter(inGrade);if(!ojPool.length&&stg&&stg.goal==="ojama")ojPool=OJAMA;
   if(bseq>8&&ojPool.length&&Math.random()<ojamaRate){const k=ojPool[Math.floor(Math.random()*ojPool.length)];
     return{glyphs:[{k,dx:0,rad:null,oj:true}],sc:1,kind:"お邪魔"}}
@@ -919,7 +962,7 @@ function busyuInit(){
   ]);
   Events.on(engine,"collisionStart",ev=>{
     for(const p of ev.pairs){const pa=p.bodyA,pb=p.bodyB,a=pa.parent,b=pb.parent;
-      if(a===b||a.label!=="block"||b.label!=="block"||a.gone||b.gone)continue;
+      if(prefilling||a===b||a.label!=="block"||b.label!=="block"||a.gone||b.gone)continue;
       const ga=a.spec.glyphs[pa.gi],gb=b.spec.glyphs[pb.gi];
       if(ga&&gb&&ga.rad&&ga.rad===gb.rad&&pa.r&&pb.r)pending.push([a,pa.gi],[b,pb.gi]);}
   });
@@ -934,7 +977,9 @@ function busyuInit(){
   jukuList=BUSYU_JUKUGO.filter(w=>radOf[w[0]]&&radOf[w[1]]);
   ojamaRate=stg?.ojama??.07;itemRate=stg?.item??.07;chanceRate=stg?.chance??.15;
   bseq=0;cleared=0;combo=0;maxCombo=0;lastClear=-9;cooldown=0;danger=0;pending=[];jukuDone=0;ojamaCleared=0;shakeStock=0;
-  timeLeft=stg?.time||0;
+  timeLeft=stg?.time||(play==="time"?TA_SEC:0);taWarn=11;
+  sinceEmpty=0;allClears=0;
+  if(hardOn())prefill();
   hold=busyuPiece(null);next=busyuPiece(hold);
 }
 // radical parts of two glyphs touching (or within a few px, so small radicals like 日 and 口 still count)
@@ -947,6 +992,36 @@ function radNear(a,ia,b,ib){
       const dy=Math.max(0,pa.bounds.min.y-pb.bounds.max.y,pb.bounds.min.y-pa.bounds.max.y);
       if(dx<tol&&dy<tol)return true}}
   return false;
+}
+// むずかしい: about half the box is already full. Neighbours never share a radical, so nothing clears by itself.
+function prefill(){
+  const cols=6,rows=4,cw=(B.R-B.L)/cols,cells=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(Math.random()<.12)continue;
+    const near=cells.filter(o=>Math.abs(o.r-r)<=1&&Math.abs(o.c-c)<=1&&o.rad).map(o=>o.rad);
+    const ok=active.filter(a=>!near.includes(a));
+    let g;
+    if(ok.length&&Math.random()>.12){const a=ok[Math.floor(Math.random()*ok.length)];g={k:a.k[Math.floor(Math.random()*a.k.length)],dx:0,rad:a}}
+    else{const pool=OJAMA.filter(inGrade);const k=(pool.length?pool:OJAMA)[Math.floor(Math.random()*(pool.length?pool:OJAMA).length)];g={k,dx:0,rad:null,oj:true}}
+    cells.push({r,c,rad:g.rad,g});
+  }
+  prefilling=true;
+  for(const o of cells){const b=buildBody({glyphs:[o.g],sc:1},B.L+cw*(o.c+.5),B.FLOOR-28-o.r*54,0,{label:"block",friction:.45});b.landed=true;b.born=-9;Composite.add(engine.world,b)}
+  for(let i=0;i<150;i++)Engine.update(engine,1000/120); // let it settle before play starts
+  // anything that ended up next to a same-radical kanji, or next to a kanji it makes a 熟語 with, becomes a どくたいじ
+  const toOj=b=>{b.gone=true;Composite.remove(engine.world,b);const pool=OJAMA.filter(inGrade),src=pool.length?pool:OJAMA,c=glyphCenter(b,0);
+    const nb=buildBody({glyphs:[{k:src[Math.floor(Math.random()*src.length)],dx:0,rad:null,oj:true}],sc:1},c.x,c.y,b.angle,{label:"block",friction:.45});
+    nb.landed=true;nb.born=-9;Composite.add(engine.world,nb)};
+  for(let pass=0;pass<4;pass++){
+    const bs=Composite.allBodies(engine.world).filter(b=>b.label==="block"&&!b.gone);let changed=false;
+    for(let x=0;x<bs.length;x++)for(let y=x+1;y<bs.length;y++){const a=bs[x],b=bs[y];if(a.gone||b.gone)continue;
+      const ca=glyphCenter(a,0),cb=glyphCenter(b,0);if(Math.hypot(ca.x-cb.x,ca.y-cb.y)>66)continue;
+      const ga=a.spec.glyphs[0],gb=b.spec.glyphs[0];
+      if((ga.rad&&ga.rad===gb.rad)||BUSYU_JUKUGO.includes(ga.k+gb.k)||BUSYU_JUKUGO.includes(gb.k+ga.k)){toOj(b);changed=true}}
+    for(let i=0;i<40;i++)Engine.update(engine,1000/120);
+    if(!changed)break;
+  }
+  pending=[];prefilling=false;sinceEmpty=cells.length;
 }
 function touchingUnits(body,gi){
   const out=[];
@@ -962,7 +1037,7 @@ function markRemove(b,i){
   ghosts.push({spec:{glyphs:[{...g,item:null}],sc:b.spec.sc},x:c.x,y:c.y,a:b.angle,t:0});
   puff(c.x,c.y,glyphColor(b.spec,g),8);
   if(!removeMap.has(b))removeMap.set(b,new Set());removeMap.get(b).add(i);
-  cleared++;if(g.oj)ojamaCleared++;stamp(g.k,1);
+  cleared++;sinceEmpty++;if(g.oj)ojamaCleared++;stamp(g.k,1);
   return c;
 }
 function processClears(checkJuku){
@@ -977,7 +1052,8 @@ function processClears(checkJuku){
         for(const [o,oi] of touchingUnits(b,i))if(o.label==="block"&&o!==b&&o.spec.glyphs[oi]&&o.spec.glyphs[oi].rad===rad&&!done.has(key(o,oi))&&radNear(b,i,o,oi))stack.push([o,oi])}
       if(group.length<2)continue;
       combo=now-lastClear<2?combo+1:1;lastClear=now;maxCombo=Math.max(maxCombo,combo);
-      const pts=Math.round(10*group.length*level()*(1+(combo-1)*.5)*(group.length>2?1.5:1));
+      const bigs=group.filter(([b])=>b.spec.sc>1).length; // a big kanji is worth an extra 20
+      const pts=Math.round(10*group.length*level()*(1+(combo-1)*.5)*(group.length>2?1.5:1))+bigs*20*level();
       score+=pts;let cx=0,cy=0;
       for(const [b,i] of group){const g=b.spec.glyphs[i],c=markRemove(b,i);if(!c)continue;cx+=c.x;cy+=c.y;
         if(g.item==="bomb")bombs.push(c);if(g.item==="shake"){shakeStock++;sfx("item");banner("ゆらし ゲット！",COL.gold)}}
@@ -1022,6 +1098,7 @@ function processClears(checkJuku){
     if(n){const pts=15*n*level();score+=pts;floats.push({x:c.x,y:c.y,text:`ボム！+${pts}`,t:0})}
   }
   if(any&&navigator.vibrate)navigator.vibrate(20);
+  const removedAny=removeMap.size>0;
   // apply: a jukugo that lost one character leaves the other one behind
   for(const [b,set] of removeMap){
     b.gone=true;Composite.remove(engine.world,b);
@@ -1033,8 +1110,15 @@ function processClears(checkJuku){
       Composite.add(engine.world,nb);
     });
   }
+  // ぜんけし: the box is completely empty after clearing (needs at least 6 kanji cleared since it was last empty)
+  if(removedAny&&!Composite.allBodies(engine.world).some(b=>b.label==="block")){
+    if(sinceEmpty>=6){const bonus=(300+20*sinceEmpty)*level();score+=bonus;allClears++;
+      floats.push({x:WW/2,y:(B.LINE+B.FLOOR)/2,text:`ぜんけし！ +${bonus}`,t:-.2,big:true});banner("ぜんけし！",COL.gold);sfx("win");
+      shakeFx=6;for(let i=0;i<40;i++){const a=Math.random()*Math.PI*2,s=80+Math.random()*220;particles.push({x:WW/2,y:B.FLOOR-60,vx:Math.cos(a)*s,vy:Math.sin(a)*s-120,life:.9,c:PALETTE[i%PALETTE.length]})}}
+    sinceEmpty=0;
+  }
 }
-function busyuX(){const hw=S0/2*(hold?hold.glyphs.length:1)+2;return Math.min(Math.max(holdX,B.L+hw),B.R-hw)}
+function busyuX(){const hw=S0/2*(hold?hold.glyphs.length*hold.sc:1)+2;return Math.min(Math.max(holdX,B.L+hw),B.R-hw)}
 function busyuDrop(){
   if(!hold||cooldown>0)return;
   const b=buildBody(hold,busyuX(),B.HOLD,0,{label:"block",friction:.45});
@@ -1057,7 +1141,9 @@ function busyuUpdate(dt){
   }
   danger=over?danger+dt:Math.max(0,danger-dt*2);
   if(danger>2.2){endGame("あふれた！");return}
-  if(timeLeft){timeLeft-=dt;if(timeLeft<=0){timeLeft=0;endGame("時間ぎれ！")}}
+  if(timeLeft){timeLeft-=dt;
+    if(play==="time"&&timeLeft<taWarn&&timeLeft>0){taWarn=Math.ceil(timeLeft)-1;sfx("warn")}
+    if(timeLeft<=0){timeLeft=0;endGame(play==="time"?"タイムアップ！":"時間ぎれ！")}}
   $("shake").hidden=shakeStock<=0;$("shake").textContent=`〰️ ゆらす ×${shakeStock}`;
 }
 function busyuDraw(){
@@ -1067,7 +1153,7 @@ function busyuDraw(){
   const pulse=danger>0?.5+.5*Math.sin(clock*18):0;
   ctx.strokeStyle=COL.shu;ctx.globalAlpha=.45+.55*pulse;ctx.lineWidth=2;ctx.setLineDash([8,6]);
   ctx.beginPath();ctx.moveTo(B.L,B.LINE);ctx.lineTo(B.R,B.LINE);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-  if(running&&hold){const x=busyuX();drawReading(hold,x,B.HOLD-S0/2-2,(B.LINE+B.FLOOR)/2);guide(x,B.HOLD+S0/2,B.FLOOR);drawSpec(hold,x,B.HOLD,0)}
+  if(running&&hold){const x=busyuX();guide(x,B.HOLD+S0/2,B.FLOOR);drawSpec(hold,x,B.HOLD,0)}
 }
 
 // ================= Dosu (stack mode) =================
@@ -1075,24 +1161,30 @@ const D={SLAB:470,BS:1.2};
 let idiom,baseBodies=[],pieces=[],placed=0,seq=0,waiting=false,lastBody=null,settleT=0,dropT=0,pts=0,maxH=0,holdY=0,baseTop=0,
     shiriDone=0,shiriRate=0,evt=null,evtTimer=0,evtFrom=3,turn=0,lastDropper=0;
 const POOL_D=()=>ALL_KANJI.filter(k=>inGrade(k)&&!OJAMA.includes(k));
-let dpool=[],shiriWords=[];
+let dpool=[],shiriWords=[],jukuWords=[],recentW=[];
+// remember the last few words so the same one does not keep coming back
+const RECENT=8,useWord=w=>{recentW.push(w);if(recentW.length>RECENT)recentW.shift()};
+const pickFresh=list=>{const f=list.filter(w=>!recentW.includes(w));const src=f.length?f:list;return src[Math.floor(Math.random()*src.length)]};
 function dosuPiece(n,prev){
   const color=PALETTE[Math.floor(Math.random()*PALETTE.length)];
   const kc=k=>KDATA[k]&&KDATA[k].grp?KDATA[k].grp.color:color;
-  if(n%10===0){const w=DOSU_JUKUGO[Math.floor(Math.random()*DOSU_JUKUGO.length)];
+  if(n%10===0){const w=pickFresh(jukuWords);useWord(w);
     return{glyphs:[{k:w[0],dx:-S0/2,c:kc(w[0])},{k:w[1],dx:S0/2,c:kc(w[1])}],sc:1,color,kind:"熟語",pts:30}}
   const k=dpool[Math.floor(Math.random()*dpool.length)];
   if(n%5===0){const big=Math.random()<.5;return{glyphs:[{k,dx:0,c:kc(k)}],sc:big?1.5:.65,color,kind:big?"大":"小",pts:big?20:10}}
-  if(prev&&prev.glyphs.length===1&&prev.sc===1&&Math.random()<shiriRate){
-    const opts=shiriWords.filter(w=>w[0]===prev.glyphs[0].k);
-    if(opts.length){const w=opts[Math.floor(Math.random()*opts.length)];
+  // no しりとり right after another one (stops loops like 日本 → 本日 → 日本), and skip words used just now
+  if(prev&&prev.glyphs.length===1&&prev.sc===1&&!prev.word&&Math.random()<shiriRate){
+    const opts=shiriWords.filter(w=>w[0]===prev.glyphs[0].k&&!recentW.includes(w));
+    if(opts.length){const w=opts[Math.floor(Math.random()*opts.length)];useWord(w);
       return{glyphs:[{k:w[1],dx:0,c:kc(w[1])}],sc:1,color,kind:"しりとり",word:w,after:prev,pts:10}}
   }
   return{glyphs:[{k,dx:0,c:kc(k)}],sc:1,color,kind:"",pts:10};
 }
 function dosuInit(){
   idiom=IDIOMS[Math.floor(Math.random()*IDIOMS.length)];seen("i",idiom);
-  dpool=POOL_D();shiriWords=BUSYU_JUKUGO.filter(w=>inGrade(w[0])&&inGrade(w[1]));
+  dpool=POOL_D();shiriWords=DOSU_JUKUGO.filter(w=>inGrade(w[0])&&inGrade(w[1]));recentW=[];
+  // the 10-piece 熟語 also follows the chosen grade (falls back to all words if too few)
+  jukuWords=shiriWords.length>=8?shiriWords:DOSU_JUKUGO;
   shiriRate=stg?.shiri??.3;evtFrom=stg?.events??3;
   const cw=S0*D.BS,x0=WW/2-cw*1.5,gy=D.SLAB-cw/2;
   const slab=Bodies.rectangle(WW/2,D.SLAB+9,cw*4,18,{isStatic:true,friction:.8,label:"slab"});
@@ -1207,6 +1299,10 @@ function draw(){
   ctx.translate(0,-camY);
   if(mode==="busyu")busyuDraw();else dosuDraw();
   for(const b of Composite.allBodies(engine.world))if(b.label==="block"||b.label==="piece")drawBody(b);
+  if(mode==="busyu"&&running&&hold){
+    let top=B.FLOOR;for(const b of Composite.allBodies(engine.world))if(b.label==="block"&&now-b.born>.8)top=Math.min(top,b.bounds.min.y);
+    drawReading(hold,busyuX(),B.HOLD-S0/2-2,0,B.LINE+6,Math.max(B.LINE+6,top-6));
+  }
   for(const g of ghosts)drawSpec(g.spec,g.x,g.y,g.a,null,Math.max(0,1-g.t/.3),1+g.t*1.2);
   for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/.6);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()}
   ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
@@ -1217,7 +1313,7 @@ function draw(){
   // screen-space HUD
   ctx.textBaseline="alphabetic";
   if(next){
-    const L={"熟語":"じゅくご！","大":"大きい！","小":"小さい！","お邪魔":"おじゃま字","チャンス":"じゅくごチャンス！","しりとり":"しりとり！","ボム":"ボム！","ゆらし":"ゆらし！"};
+    const L={"熟語":"じゅくご！","大":"大きい！","小":"小さい！","お邪魔":"どくたいじ","チャンス":"じゅくごチャンス！","しりとり":"しりとり！","ボム":"ボム！","ゆらし":"ゆらし！"};
     ctx.fillStyle=next.kind?COL.shu:COL.muted;ctx.font=`700 12px "Zen Maru Gothic",sans-serif`;ctx.textAlign="right";
     ctx.fillText(next.kind?`つぎ・${L[next.kind]}`:"つぎ",WW-12,22);
     if(next.word){ctx.fillStyle=COL.muted;ctx.font=`700 11px "Zen Maru Gothic",sans-serif`;ctx.fillText(`${next.word}（${WORDS[next.word].yomi}）`,WW-12,84)}
@@ -1230,6 +1326,8 @@ function draw(){
     ctx.fillText(`おだい：${stg.text.replace(/（.*）/,"")}`,12,y);y+=16;
     ctx.fillStyle=COL.shu;ctx.fillText(`${stg.goal==="height"?v.toFixed(1):v} / ${stg.n}`+(timeLeft?`　のこり ${Math.ceil(timeLeft)}びょう`:""),12,y);y+=16;
   }
+  if(play==="time"&&mode==="busyu"&&engine){const t=Math.ceil(timeLeft),m=Math.floor(t/60),s=String(t%60).padStart(2,"0");
+    ctx.font=`900 22px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=t<=10?COL.shu:COL.ink;ctx.fillText(`⏱ ${m}:${s}`,12,y+6);y+=26}
   if(play==="vs"&&running){ctx.font=`900 18px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=turn?COL.ai:COL.shu;ctx.fillText(`${turn?"B":"A"}のばん`,12,y+4)}
   // banners
   ctx.textAlign="center";
@@ -1249,7 +1347,8 @@ function loop(ts){
 function hud(){
   $("score").textContent=play==="vs"?placed:score;
   if(mode==="busyu"){$("lv").textContent=`レベル ${level()}・${cleared}こ けした`;
-    const b=store("busyu-best-"+count);$("best").textContent=play==="free"?(`ぶしゅ${count}つ`+(b?` ベスト ${b}`:"")):`ステージ ${stageIdx.busyu+1}`}
+    const b=store(bestKey(count));
+    $("best").textContent=play==="stage"?`ステージ ${stageIdx.busyu+1}`:(play==="time"?"3分 ":"")+(hardOn()?"むずかしい ":"")+`ぶしゅ${count}つ`+(b?` ベスト ${b}`:"")}
   else if(play==="vs"){$("lv").textContent=`ふたりで・高さ ${maxH.toFixed(1)}字`;$("best").textContent="つんだ数"}
   else{$("lv").textContent=`${placed}こ・高さ ${maxH.toFixed(1)}字`;const b=store("dosu-best");$("best").textContent=play==="free"?(b?`ベスト ${b}`:""):`ステージ ${stageIdx.dosu+1}`}
 }
@@ -1277,7 +1376,7 @@ const drop=()=>{if(!running)return;mode==="busyu"?busyuDrop():dosuDrop()};
 
 // ================= menus =================
 const DESC={
-  busyu:["同じ<ruby>部首<rt>ぶしゅ</rt></ruby>の<ruby>漢字<rt>かんじ</rt></ruby>どうしが くっつくと きえるよ。<ruby>熟語<rt>じゅくご</rt></ruby>になる 2字を 読める じゅんに ならべると 大ボーナス。はい色の おじゃま字は 光る💣ボムで けせるよ。",
+  busyu:["同じ<ruby>部首<rt>ぶしゅ</rt></ruby>の<ruby>漢字<rt>かんじ</rt></ruby>どうしが くっつくと きえるよ。<ruby>熟語<rt>じゅくご</rt></ruby>になる 2字を 読める じゅんに ならべると 大ボーナス。はい色の どくたいじは 光る💣ボムで けせるよ。",
          "ゆびで ばしょを きめて はなすと おちるよ（パソコンは マウスと クリック、←→と スペースでも OK）。〰️を けすと「ゆらす」が つかえるよ（パソコンは Sキー）"],
   dosu:["<ruby>四字熟語<rt>よじじゅくご</rt></ruby>の 土台に <ruby>漢字<rt>かんじ</rt></ruby>を つもう。りょうがわは あな、おちたら おわり。5こごとに 大きさが かわり、10こごとに <ruby>熟語<rt>じゅくご</rt></ruby>。前の字と <ruby>熟語<rt>じゅくご</rt></ruby>になる字を 上に のせると「しりとりづみ」ボーナス。高くなると 風や じしんも くるよ。",
         "ゆびで ばしょを きめて はなすと おちるよ。右下の ↻で まわす（パソコンは マウスと クリック、↑か Rで まわす）"],
@@ -1285,14 +1384,19 @@ const DESC={
 function buildMenu(){
   if(mode==="busyu"&&play==="vs")play="free";
   document.querySelectorAll("#modes button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===mode));
-  const plays=[["free","フリー"],["stage","ステージ"]];if(mode==="dosu")plays.push(["vs","ふたりで"]);
+  if(mode==="dosu"&&play==="time")play="free";
+  const plays=mode==="busyu"?[["free","エンドレス"],["time","タイムアタック<small>3分</small>"],["stage","ステージ"]]:[["free","フリー"],["stage","ステージ"]];if(mode==="dosu")plays.push(["vs","ふたりで"]);
   const pb=$("plays");pb.innerHTML="";
-  for(const [id,name] of plays){const b=document.createElement("button");b.textContent=name;b.setAttribute("aria-pressed",id===play);
+  for(const [id,name] of plays){const b=document.createElement("button");b.innerHTML=name;b.setAttribute("aria-pressed",id===play);
     b.onclick=()=>{play=id;store("bd-play",id);buildMenu()};pb.appendChild(b)}
-  $("desc").innerHTML=play==="vs"?"1台を ふたりで こうたいに つかって つみ上げるよ。じぶんの 番で 字を おとしたら まけ。":DESC[mode][0];
+  $("desc").innerHTML=play==="time"?"3分間で どれだけ 点を とれるかな？ あふれても おわりだよ。":play==="vs"?"1台を ふたりで こうたいに つかって つみ上げるよ。じぶんの 番で 字を おとしたら まけ。":DESC[mode][0];
   $("howto").innerHTML=DESC[mode][1];
-  $("busyuOpts").hidden=!(mode==="busyu"&&play==="free");
+  $("busyuOpts").hidden=!(mode==="busyu"&&(play==="free"||play==="time"));
   $("ruleOpts").hidden=mode!=="busyu";
+  const db=$("diffs");db.innerHTML="";
+  for(const [id,name,sub] of [["normal","ふつう","からっぽから"],["hard","むずかしい","半分 うまってる"]]){
+    const b=document.createElement("button");b.setAttribute("aria-pressed",id===diff);b.innerHTML=`${name}<small>${sub}</small>`;
+    b.onclick=()=>{diff=id;store("busyu-diff",id);buildMenu()};db.appendChild(b)}
   const rb=$("rules");rb.innerHTML="";
   for(const [id,name,sub] of [["rad","ぶしゅどうし","色の ところが ふれたら"],["any","字のどこでも","かんたん"]]){
     const b=document.createElement("button");b.setAttribute("aria-pressed",id===rule);b.innerHTML=`${name}<small>${sub}</small>`;
@@ -1310,7 +1414,7 @@ function buildMenu(){
   // counts
   const av=availRads().length,cb=$("counts");cb.innerHTML="";
   for(const c of COUNTS){const b=document.createElement("button");b.setAttribute("aria-pressed",c===count);b.disabled=c>av;
-    const best=store("busyu-best-"+c);b.innerHTML=`${c}<small>${best?"ベスト "+best:"&nbsp;"}</small>`;
+    const best=store(bestKey(c));b.innerHTML=`${c}<small>${best?"ベスト "+best:"&nbsp;"}</small>`;
     b.onclick=()=>{count=c;store("busyu-count",c);buildMenu()};cb.appendChild(b)}
   if(count>av){count=COUNTS.filter(c=>c<=av).pop();buildMenu();return}
   const gb=$("grades");gb.innerHTML="";
@@ -1363,7 +1467,7 @@ async function start(){cv.style.visibility="visible";
   $("startBtn").disabled=false;$("startBtn").textContent="スタート";$("retryBtn").disabled=false;
   $("start").hidden=true;$("over").hidden=true;$("zukan").hidden=true;
   stg=play==="stage"?(mode==="busyu"?BSTAGES:DSTAGES)[stageIdx[mode]]:null;
-  if(play==="free"||play==="vs")$("hint").checked=store("busyu-hint")!=="0";
+  if(play==="free"||play==="vs"||play==="time")$("hint").checked=store("busyu-hint")!=="0";
   else if(stg&&stg.hint!==false)$("hint").checked=true;
   engine=Engine.create();engine.gravity.y=1;engine.positionIterations=8;engine.velocityIterations=6;
   Events.on(engine,"collisionStart",onLand);
@@ -1380,8 +1484,8 @@ function endGame(title){
   if(play==="vs"){detail=`${placed}こ・高さ ${maxH.toFixed(1)}字まで つみました`;sfx("win")}
   else if(play==="stage"){detail=`ステージ${stageIdx[mode]+1}：${stg.text}`;sfx("over")}
   else if(mode==="busyu"){
-    const key="busyu-best-"+count,prev=+store(key)||0;
-    detail=`ぶしゅ${active.length}つ・${cleared}こ けした・じゅくご${jukuDone}つ・さいだい${maxCombo}コンボ`+(score>prev?"　じこベスト こうしん！":prev?`　ベスト ${prev}`:"");
+    const key=bestKey(count),prev=+store(key)||0;
+    detail=(play==="time"?"3分 タイムアタック・":"")+(hardOn()?"むずかしい・":"")+`ぶしゅ${active.length}つ・${cleared}こ けした`+(allClears?`・ぜんけし${allClears}回`:"")+`・じゅくご${jukuDone}つ・さいだい${maxCombo}コンボ`+(score>prev?"　じこベスト こうしん！":prev?`　ベスト ${prev}`:"");
     if(score>prev)store(key,score);sfx("over");
   }else{
     const prev=+store("dosu-best")||0;
@@ -1413,6 +1517,15 @@ $("hint").onchange=()=>{store("busyu-hint",$("hint").checked?"1":"0")};
 // ================= zukan screen =================
 function zukanNote(){const a=[];if(newSeen)a.push(`あたらしい字 ${newSeen}`);if(newStamp)a.push(`スタンプ ${newStamp}`);return a.length?`<br>📖 ずかん：${a.join("・")}`:""}
 let ztab="k",zFrom=null,zrad="all";
+// PC: the mouse wheel and dragging also move the radical row sideways
+(function(){const rb=$("zrads");let down=null;
+  rb.addEventListener("wheel",e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){rb.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+  rb.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;down={x:e.clientX,s:rb.scrollLeft};rb.dragged=false});
+  addEventListener("pointermove",e=>{if(!down)return;const d=e.clientX-down.x;if(Math.abs(d)>5)rb.dragged=true;rb.scrollLeft=down.s-d});
+  addEventListener("pointerup",()=>{down=null;setTimeout(()=>rb.dragged=false,0)});
+  $("zradL").onclick=()=>rb.scrollBy({left:-rb.clientWidth*.7,behavior:"smooth"});
+  $("zradR").onclick=()=>rb.scrollBy({left:rb.clientWidth*.7,behavior:"smooth"});
+})();
 const MODE_STAMPS=[[1,"Busyu","けした","#2F80D0"],[2,"Dosu","つんだ","#8B5A2B"],[4,"Kururi","たおした","#C8402E"]];
 function openZukan(from){zFrom=from;cv.style.visibility=from==="home"?"hidden":"visible";$("homeIcon").hidden=from==="home";$(from).hidden=true;$("zukan").hidden=false;$("zcard").hidden=true;buildZukan()}
 function buildZukan(){
@@ -1423,15 +1536,17 @@ function buildZukan(){
   const tb=$("ztabs");tb.innerHTML="";
   for(const [id,name,list] of tabs){const b=document.createElement("button");b.setAttribute("aria-pressed",id===ztab);
     b.innerHTML=`${name}<small>${list.filter(x=>ZK[id][x]).length}/${list.length}</small>`;b.onclick=()=>{ztab=id;$("zcard").hidden=true;buildZukan()};tb.appendChild(b)}
-  // radical filter (kanji tab only)
-  const rb=$("zrads");rb.innerHTML="";rb.hidden=ztab!=="k";
+  // radical filter (kanji tab only): one row that scrolls sideways
+  const opts=[["all","ぜんぶ",null,ALL_KANJI],...RADICALS.map(r=>[r.sym,r.sym,r.color,r.all]),["oj","どくたいじ",null,OJAMA]];
+  const rb=$("zrads"),keep=rb.scrollLeft;rb.hidden=ztab!=="k";rb.innerHTML="";
   if(ztab==="k"){
-    const opts=[["all","ぜんぶ",null,ALL_KANJI],...RADICALS.map(r=>[r.sym,r.sym,r.color,r.all]),["oj","おじゃま",null,OJAMA]];
     for(const [id,label,color,ks] of opts){const b=document.createElement("button");b.setAttribute("aria-pressed",id===zrad);
+      if(!color)b.className="wide";
       const fin=ks.filter(k=>lvOf(k)===3).length;
-      b.innerHTML=`<span${color?` style="color:${color}"`:""}>${label}</span><small>${fin}/${ks.length}</small>`;
-      if(color){const r=RADICALS.find(x=>x.sym===id);b.title=r.name;b.setAttribute("aria-label",r.name)}
-      b.onclick=()=>{zrad=id;$("zcard").hidden=true;buildZukan()};rb.appendChild(b)}
+      b.innerHTML=`<b${color&&id!==zrad?` style="color:${color}"`:""}>${label}</b><small>★${fin}/${ks.length}</small>`;
+      if(color){const r=RADICALS.find(x=>x.sym===id);b.title=r.name;b.setAttribute("aria-label",`${r.name} ${fin}/${ks.length}`)}
+      b.onclick=()=>{if(rb.dragged)return;zrad=id;$("zcard").hidden=true;buildZukan()};rb.appendChild(b)}
+    rb.scrollLeft=keep;
   }
   let list=tabs.find(t=>t[0]===ztab)[2];
   if(ztab==="k"&&zrad!=="all")list=zrad==="oj"?OJAMA:(RADICALS.find(r=>r.sym===zrad)||{all:[]}).all;
@@ -1449,7 +1564,7 @@ function showCard(x){
   const c=$("zcard");c.hidden=false;
   if(ztab==="k"){const d=KDATA[x];
     say(readingOf(x),true);
-    c.innerHTML=`<span class="zk" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p class="big2">${readingOf(x)}</p><p>おん：${d.on}　くん：${d.kun}</p><p class="m">いみ：${d.mean}</p><p class="m">${d.rad?`ぶしゅ：${d.rad}　`:"おじゃま字　"}${gradeName(d.g)}</p>
+    c.innerHTML=`<span class="zk" style="font-family:${F.family},${FALLBACK}">${x}</span><div><p class="big2">${readingOf(x)}</p><p>おん：${d.on}　くん：${d.kun}</p><p class="m">いみ：${d.mean}</p><p class="m">${d.rad?`ぶしゅ：${d.rad}　`:"どくたいじ　"}${gradeName(d.g)}</p>
       <p class="stamps">${MODE_STAMPS.map(([bit,m,act,col])=>`<span class="${(ZK.c[x]|0)&bit?"on":""}" style="--c:${col}">${m}<br><small>${act}</small></span>`).join("")}</p>
       <p class="m">${lvOf(x)===3?"★ かんせい！":`のこり ${3-lvOf(x)}つで かんせい`}</p></div>`}
   else{const d=WORDS[x];say(d.yomi,true);

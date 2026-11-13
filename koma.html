@@ -574,14 +574,14 @@ function inkOf(k){
 }
 // weight is ranked against every kanji, so the lightest is 0.8 and the heaviest 1.8 whatever the font
 let inkSorted=null;
-const BAL={speed:[1.15,.4],stam:[1.1,.1],mass:[.8,.8],mrExp:.5}; // tuned by simulating heavy vs light matches to about 50:50
+const BAL={speed:[1.15,.4],stam:[1.5,.5],mass:[.8,.8],mrExp:.15}; // tuned by simulating heavy vs light matches to about 50:50
 function statsOf(k){
   if(!inkSorted)inkSorted=Object.keys(KDATA).map(inkOf).sort((a,b)=>a-b);
   const ink=inkOf(k);let i=0;while(i<inkSorted.length&&inkSorted[i]<ink)i++;
   const w=.8+i/(inkSorted.length-1);
   // heavy kanji push harder and are hard to move; light kanji launch faster and keep spinning longer
   const t=w-.8,speed=BAL.speed[0]-BAL.speed[1]*t,stamina=BAL.stam[0]-BAL.stam[1]*t,mass=(BAL.mass[0]+BAL.mass[1]*t)*4;
-  return{w,speed,stamina,mass,stars:{omosa:Math.round(t*4)+1,hayasa:Math.round((1-t)*4)+1,nebari:Math.round(1-t)+3}};
+  return{w,speed,stamina,mass,stars:{omosa:Math.round(t*4)+1,hayasa:Math.round((1-t)*4)+1,nebari:Math.round((1-t)*4)+1}};
 }
 const starStr=n=>"★".repeat(n)+"☆".repeat(5-n);
 
@@ -656,11 +656,11 @@ const FIELDS=[
   {id:"shrink",name:"ちぢむ",icon:"⏬",R:158,shrink:true,desc:"だんだん小さくなる"},
   {id:"ice",name:"こおり",icon:"🧊",R:158,ice:true,desc:"つるつるすべる"},
   {id:"spring",name:"ばね",icon:"〰️",R:158,spring:true,desc:"ふちで強くはねかえる"},
-  {id:"bar",name:"まわるぼう",icon:"🔄",R:158,bar:true,desc:"まん中で ぼうが 回る"},
+  {id:"bar",name:"まわるぼう",icon:"🔄",R:158,bar:true,desc:"とけいの はりのように ぼうが 回る"},
   {id:"random",name:"おまかせ",icon:"🎲",desc:"毎ラウンドかわる"},
 ];
-let fieldSel=store("km-field")||"normal",FIELD=FIELDS[0],gaps=[],pillars=[],pillarT=0,bar=null,barAng=0;
-const BAR_W=.014; // rotating bar speed (radians per physics step)
+let fieldSel=store("km-field")||"normal",FIELD=FIELDS[0],gaps=[],pillars=[],pillarT=0,bar=null,barAng=0,barLen=0;
+const BAR_W=.014,SEEK=.022; // rotating bar speed (radians per physics step)
 function setupField(){
   const real=FIELDS.filter(f=>f.id!=="random");
   FIELD=fieldSel==="random"?real[Math.floor(Math.random()*real.length)]:FIELDS.find(f=>f.id===fieldSel)||FIELDS[0];
@@ -787,7 +787,8 @@ function startRound(){
     tops[who]={who,k,body:b,s,elem:elemOf(k),spin:0,angle:Math.random()*6,out:false,stopped:false,used:false,fall:0};
   }
   bar=null;barAng=0;
-  if(FIELD.bar){bar=Bodies.rectangle(CX,CY,R*1.45,12,{isStatic:true,label:"bar",restitution:.8,chamfer:{radius:6}});Composite.add(engine.world,bar)}
+  // a clock-hand bar: from the centre out to one side only, so the two kanji can still meet on the other side
+  if(FIELD.bar){barLen=R*.8;bar=Bodies.rectangle(CX+barLen/2,CY,barLen,12,{isStatic:true,label:"bar",restitution:.8,chamfer:{radius:6}});Composite.add(engine.world,bar)}
   aim={A:null,B:null};
   drawQuiz("A");
 }
@@ -809,7 +810,7 @@ $("confirm").onclick=()=>{
 };
 function startCount(){phase="count";count=3.2;$("confirm").hidden=true}
 function launch(){
-  phase="battle";battleT=0;sfx("launch");
+  phase="battle";battleT=0;lastClash=-1;accT=0;sfx("launch");
   for(const who of ["A","B"]){
     const t=tops[who],a=aim[who],sp=(3+4*a.p)*t.s.speed;
     Body.setVelocity(t.body,{x:Math.cos(a.a)*sp,y:Math.sin(a.a)*sp});
@@ -863,6 +864,9 @@ function physics(dt){
       let vx=b.velocity.x+dx*.0011,vy=b.velocity.y+dy*.0011;
       if(d>12){vx+=(-dy/d)*.045*sr*(t.who==="A"?1:-1);vy+=(dx/d)*.045*sr*(t.who==="A"?1:-1)}
       if(FIELD.swirl&&d>8){vx+=(-dy/d)*.07;vy+=(dx/d)*.07}
+      // the spinning tops are drawn toward each other, so they meet and clash instead of circling apart
+      const o=tops[t.who==="A"?"B":"A"];if(o&&!o.out&&!o.stopped){const ox=o.body.position.x-b.position.x,oy=o.body.position.y-b.position.y,od=Math.hypot(ox,oy)||1;
+        vx+=ox/od*SEEK*(.4+sr);vy+=oy/od*SEEK*(.4+sr)}
       // spin motor: keeps the kanji turning while it still has spin
       const target=(t.who==="A"?1:-1)*(.04+sr*.3);Body.setAngularVelocity(b,b.angularVelocity+(target-b.angularVelocity)*.06);
       // the dish has a raised rim: slow tops bounce back, only a hard hit flies over it
@@ -871,7 +875,7 @@ function physics(dt){
       if(d>R-TR*.7&&vr>0&&vr<rimMax&&!inGap(Math.atan2(-dy,-dx))){vx-=kick*vr*nx;vy-=kick*vr*ny;t.rim=.25;if(FIELD.spring&&vr>1.5)sfx("count")}
       Body.setVelocity(b,{x:vx,y:vy});
     }
-    if(bar){barAng+=BAR_W;Body.setAngle(bar,barAng)}
+    if(bar){barAng+=BAR_W;Body.setAngle(bar,barAng);Body.setPosition(bar,{x:CX+Math.cos(barAng)*barLen/2,y:CY+Math.sin(barAng)*barLen/2})}
     Engine.update(engine,STEP);
   }
 }
@@ -1010,9 +1014,9 @@ function draw(){
     ctx.strokeStyle="rgba(255,255,255,.7)";ctx.lineWidth=2;for(let i=0;i<7;i++){const a=i*0.9,r=R*(.2+((i*37)%60)/100);ctx.beginPath();ctx.moveTo(CX+Math.cos(a)*r,CY+Math.sin(a)*r);ctx.lineTo(CX+Math.cos(a)*r+18,CY+Math.sin(a)*r-8);ctx.stroke()}ctx.restore()}
   if(FIELD.spring){ctx.strokeStyle=COL.gold;ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<=120;i++){const a=i/120*Math.PI*2,r=R+(i%2?4:-4);ctx.lineTo(CX+Math.cos(a)*r,CY+Math.sin(a)*r)}ctx.stroke()}
   if(FIELD.shrink&&R<FIELD.R){ctx.strokeStyle=COL.shu;ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();ctx.arc(CX,CY,FIELD.R,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
-  if(bar){ctx.save();ctx.translate(CX,CY);ctx.rotate(barAng);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(-R*.725+3,-6+5,R*1.45,12);
-    ctx.fillStyle="#8B5A2B";ctx.beginPath();ctx.roundRect?ctx.roundRect(-R*.725,-6,R*1.45,12,6):ctx.rect(-R*.725,-6,R*1.45,12);ctx.fill();
-    ctx.fillStyle="#C9A27A";ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();ctx.restore()}
+  if(bar){ctx.save();ctx.translate(CX,CY);ctx.rotate(barAng);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(3,-6+5,barLen,12);
+    ctx.fillStyle="#8B5A2B";ctx.beginPath();ctx.roundRect?ctx.roundRect(-6,-6,barLen+6,12,6):ctx.rect(-6,-6,barLen+6,12);ctx.fill();
+    ctx.fillStyle="#C9A27A";ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.restore()}
   if(FIELD.swirl){ctx.strokeStyle=COL.line;ctx.lineWidth=3;ctx.globalAlpha=.7;
     for(let i=0;i<4;i++){ctx.beginPath();for(let s2=0;s2<=1;s2+=.05){const a=clock*.9+i*Math.PI/2+s2*2.2,r=12+s2*R*.85;ctx.lineTo(CX+Math.cos(a)*r,CY+Math.sin(a)*r)}ctx.stroke()}ctx.globalAlpha=1}
   for(const p of pillars){
