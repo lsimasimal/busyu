@@ -659,11 +659,11 @@ const gradeName=g=>g>=7?"中学":`小${g}`;
 // reading to show and speak: kun-yomi if there is one, otherwise on-yomi, in hiragana
 const kata2hira=t=>t.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
 const YOMI={一:"いち",三:"さん",七:"しち",八:"はち",十:"じゅう",六:"ろく",千:"せん",万:"まん",校:"こう",学:"がく",上:"うえ",下:"した",
-  天:"てん",公:"こう",午:"ご",王:"おう",字:"じ",番:"ばん",電:"でん",地:"ち",理:"り",本:"ほん",名:"な",陽:"よう",祥:"しょう",加:"くわえる",社:"しゃ",力:"ちから",九:"きゅう",才:"さい"};
-function readingOf(k){const d=KDATA[k];if(!d)return"";if(YOMI[k])return YOMI[k];const r=d.kun!=="—"?d.kun:d.on;return kata2hira(r.split("・")[0].replace(/[()]/g,""))}
+  天:"てん",公:"こう",午:"ご",王:"おう",字:"じ",番:"ばん",電:"でん",地:"ち",理:"り",本:"ほん",名:"な",陽:"よう",祥:"しょう",社:"しゃ",力:"ちから",九:"きゅう",才:"さい"};
+function readingOf(k){const d=KDATA[k];if(!d)return"";if(YOMI[k])return YOMI[k];const r=d.kun!=="—"?d.kun:d.on;return kata2hira(r.split("・")[0].replace(/\(([^)]*)\)/g,"（$1）"))}
 
 const PALETTE=["#2F6DB5","#2E8B57","#C0392B","#8547B0","#C98208","#138A90","#B5457A","#6E5A3A"];
-const COUNTS=[3,4,5,6,8];
+const COUNTS=[3,4,5,6,7,8];
 const FALLBACK=`"Hiragino Sans","Noto Sans JP",sans-serif`;
 const FONTS=[
   {id:"maru",name:"丸ゴシック",family:`"Zen Maru Gothic"`,weight:900},
@@ -672,6 +672,7 @@ const FONTS=[
   {id:"dot",name:"ドット",family:`"DotGothic16"`,weight:400},
   {id:"futo",name:"ごくぶと",family:`"Dela Gothic One"`,weight:400},
   {id:"magic",name:"マジック",family:`"Yusei Magic"`,weight:400},
+  {id:"kyoka",name:"教科書",family:`"Klee One"`,weight:600},
 ];
 const BSTAGES=[
   {count:3,goal:"clear",n:8,text:"8こ けす"},
@@ -800,7 +801,7 @@ $("bgmBtn").onclick=()=>{bgmOn=!bgmOn;store("bd-bgm",bgmOn?"1":"0");syncSoundBtn
 let voiceOn=store("bd-voice")!=="0",jaVoice=null,lastSaid=null;
 function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));jaVoice=vs.find(v=>v.localService)||vs[0]||null}
 if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-function say(text,force){
+function say(text,force){if(text)text=String(text).replace(/[（(]([^）)]*)[）)]/g,"$1");
   if(!text||(!voiceOn&&!force)||!("speechSynthesis" in window))return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.rate=.95;speechSynthesis.speak(u)}catch(e){}
 }
@@ -930,7 +931,29 @@ const TA_SEC=180;let taWarn=11;
 let diff=store("busyu-diff")==="hard"?"hard":"normal",sinceEmpty=0,prefilling=false,allClears=0;
 const hardOn=()=>diff==="hard"&&(play==="free"||play==="time");
 const bestKey=c=>(play==="time"?"busyu-ta-":"busyu-best-")+c+(hardOn()?"-h":"");
-function busyuPiece(prev){
+// エンドレス: as time goes on the kanji get bigger and more radicals join, so a game ends in about five minutes
+const GROW={t:60,step:.2,max:2.0,radT:90,start:5,maxRad:10,cap:2.3}; // 20% bigger every minute, up to 2x
+const growOn=()=>mode==="busyu"&&play==="free";
+const growSc=()=>growOn()?Math.min(GROW.max,1+GROW.step*Math.floor(now/GROW.t)):1;
+let growLv=0;
+function growTick(){
+  if(!growOn())return;
+  const lv=Math.floor(now/GROW.t);
+  if(lv>growLv){growLv=lv;if(1+GROW.step*lv<=GROW.max+1e-9){banner("字が 大きくなった！",COL.ai);sfx("item")}}
+  const want=Math.min(GROW.maxRad,GROW.start+Math.floor(now/GROW.radT));
+  if(active.length<want){
+    const pool=availRads().filter(r=>!active.some(a=>a.sym===r.sym));if(!pool.length)return;
+    const r={...pool[Math.floor(Math.random()*pool.length)]},used=active.map(a=>a.color);
+    if(used.some(c=>colorDist(c,r.color)<70)){const EX=[...PALETTE,"#00ACC1","#7CB342","#F06292","#455A64","#FF8F00","#3949AB"];
+      r.color=EX.reduce((best,c)=>{const m=Math.min(...used.map(u=>colorDist(u,c)));return m>best.m?{c,m}:best},{c:EX[0],m:-1}).c}
+    active.push(r);for(const k of r.k)radOf[k]=r;jukuList=BUSYU_JUKUGO.filter(w=>radOf[w[0]]&&radOf[w[1]]);
+    buildLegend();banner(`ぶしゅが ふえた！ ${r.sym}`,r.color);sfx("item");
+  }
+}
+function busyuPiece(prev){const p=busyuPieceBase(prev);
+  // keep every piece inside the box: big kanji and 熟語 are capped so they still fit
+  p.sc=Math.min(p.sc*growSc(),p.glyphs.length>1?GROW.cap*.8:GROW.cap);return p}
+function busyuPieceBase(prev){
   bseq++;
   // every 7th piece: a big kanji or a 熟語 (half and half)
   if(bseq%7===0){
@@ -966,7 +989,7 @@ function busyuInit(){
       const ga=a.spec.glyphs[pa.gi],gb=b.spec.glyphs[pb.gi];
       if(ga&&gb&&ga.rad&&ga.rad===gb.rad&&pa.r&&pb.r)pending.push([a,pa.gi],[b,pb.gi]);}
   });
-  const n=Math.min(stg?stg.count:count,availRads().length);
+  const n=Math.min(stg?stg.count:(play==="free"?Math.max(count,GROW.start):count),availRads().length);growLv=0;
   if(stg&&stg.hint===false)$("hint").checked=false;
   active=availRads().sort(()=>Math.random()-.5).slice(0,n).map(r=>({...r}));
   const EXTRA=[...PALETTE,"#00ACC1","#7CB342","#F06292","#455A64","#FF8F00","#3949AB"];
@@ -1118,10 +1141,12 @@ function processClears(checkJuku){
     sinceEmpty=0;
   }
 }
+// big kanji are held a little lower so the reading label above them stays on screen
+function holdYB(){return hold?Math.max(B.HOLD,30+S0*hold.sc/2):B.HOLD}
 function busyuX(){const hw=S0/2*(hold?hold.glyphs.length*hold.sc:1)+2;return Math.min(Math.max(holdX,B.L+hw),B.R-hw)}
 function busyuDrop(){
   if(!hold||cooldown>0)return;
-  const b=buildBody(hold,busyuX(),B.HOLD,0,{label:"block",friction:.45});
+  const b=buildBody(hold,busyuX(),holdYB(),0,{label:"block",friction:.45});
   Body.setVelocity(b,{x:0,y:2});Composite.add(engine.world,b);
   for(const g of hold.glyphs)seen("k",g.k);if(hold.glyphs.length===2)seen("w",hold.glyphs[0].k+hold.glyphs[1].k);
   hold=null;cooldown=.55;sfx("drop");
@@ -1133,6 +1158,7 @@ function doShake(){
     Body.setVelocity(b,{x:b.velocity.x+(Math.random()-.5)*7,y:b.velocity.y-3-Math.random()*3}),Body.setAngularVelocity(b,(Math.random()-.5)*.25);
 }
 function busyuUpdate(dt){
+  growTick();
   if(cooldown>0){cooldown-=dt;if(cooldown<=0&&!hold){hold=next;next=busyuPiece(hold)}}
   let over=false;
   for(const b of Composite.allBodies(engine.world)){
@@ -1153,7 +1179,7 @@ function busyuDraw(){
   const pulse=danger>0?.5+.5*Math.sin(clock*18):0;
   ctx.strokeStyle=COL.shu;ctx.globalAlpha=.45+.55*pulse;ctx.lineWidth=2;ctx.setLineDash([8,6]);
   ctx.beginPath();ctx.moveTo(B.L,B.LINE);ctx.lineTo(B.R,B.LINE);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-  if(running&&hold){const x=busyuX();guide(x,B.HOLD+S0/2,B.FLOOR);drawSpec(hold,x,B.HOLD,0)}
+  if(running&&hold){const x=busyuX(),hy=holdYB();guide(x,hy+S0*hold.sc/2,B.FLOOR);drawSpec(hold,x,hy,0)}
 }
 
 // ================= Dosu (stack mode) =================
@@ -1301,7 +1327,7 @@ function draw(){
   for(const b of Composite.allBodies(engine.world))if(b.label==="block"||b.label==="piece")drawBody(b);
   if(mode==="busyu"&&running&&hold){
     let top=B.FLOOR;for(const b of Composite.allBodies(engine.world))if(b.label==="block"&&now-b.born>.8)top=Math.min(top,b.bounds.min.y);
-    drawReading(hold,busyuX(),B.HOLD-S0/2-2,0,B.LINE+6,Math.max(B.LINE+6,top-6));
+    drawReading(hold,busyuX(),holdYB()-S0*hold.sc/2-2,0,B.LINE+6,Math.max(B.LINE+6,top-6));
   }
   for(const g of ghosts)drawSpec(g.spec,g.x,g.y,g.a,null,Math.max(0,1-g.t/.3),1+g.t*1.2);
   for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/.6);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()}
@@ -1326,6 +1352,10 @@ function draw(){
     ctx.fillText(`おだい：${stg.text.replace(/（.*）/,"")}`,12,y);y+=16;
     ctx.fillStyle=COL.shu;ctx.fillText(`${stg.goal==="height"?v.toFixed(1):v} / ${stg.n}`+(timeLeft?`　のこり ${Math.ceil(timeLeft)}びょう`:""),12,y);y+=16;
   }
+  // エンドレス: time played so far
+  if(play==="free"&&mode==="busyu"&&engine&&(running||sim)){const t=Math.floor(now),m=Math.floor(t/60),s=String(t%60).padStart(2,"0");
+    ctx.font=`900 22px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=COL.ink;ctx.fillText(`⏱ ${m}:${s}`,12,y+6);
+    ctx.font=`700 11px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=COL.muted;ctx.fillText(`字の大きさ ×${growSc().toFixed(1)}`,14,y+24);y+=40}
   if(play==="time"&&mode==="busyu"&&engine){const t=Math.ceil(timeLeft),m=Math.floor(t/60),s=String(t%60).padStart(2,"0");
     ctx.font=`900 22px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=t<=10?COL.shu:COL.ink;ctx.fillText(`⏱ ${m}:${s}`,12,y+6);y+=26}
   if(play==="vs"&&running){ctx.font=`900 18px "Zen Maru Gothic",sans-serif`;ctx.fillStyle=turn?COL.ai:COL.shu;ctx.fillText(`${turn?"B":"A"}のばん`,12,y+4)}
@@ -1348,7 +1378,7 @@ function hud(){
   $("score").textContent=play==="vs"?placed:score;
   if(mode==="busyu"){$("lv").textContent=`レベル ${level()}・${cleared}こ けした`;
     const b=store(bestKey(count));
-    $("best").textContent=play==="stage"?`ステージ ${stageIdx.busyu+1}`:(play==="time"?"3分 ":"")+(hardOn()?"むずかしい ":"")+`ぶしゅ${count}つ`+(b?` ベスト ${b}`:"")}
+    $("best").textContent=play==="stage"?`ステージ ${stageIdx.busyu+1}`:(play==="time"?"3分 ":"")+(hardOn()?"むずかしい ":"")+`ぶしゅ${running&&active.length?active.length:count}つ`+(b?` ベスト ${b}`:"")}
   else if(play==="vs"){$("lv").textContent=`ふたりで・高さ ${maxH.toFixed(1)}字`;$("best").textContent="つんだ数"}
   else{$("lv").textContent=`${placed}こ・高さ ${maxH.toFixed(1)}字`;const b=store("dosu-best");$("best").textContent=play==="free"?(b?`ベスト ${b}`:""):`ステージ ${stageIdx.dosu+1}`}
 }
@@ -1389,7 +1419,7 @@ function buildMenu(){
   const pb=$("plays");pb.innerHTML="";
   for(const [id,name] of plays){const b=document.createElement("button");b.innerHTML=name;b.setAttribute("aria-pressed",id===play);
     b.onclick=()=>{play=id;store("bd-play",id);buildMenu()};pb.appendChild(b)}
-  $("desc").innerHTML=play==="time"?"3分間で どれだけ 点を とれるかな？ あふれても おわりだよ。":play==="vs"?"1台を ふたりで こうたいに つかって つみ上げるよ。じぶんの 番で 字を おとしたら まけ。":DESC[mode][0];
+  $("desc").innerHTML=mode==="busyu"&&play==="free"?"時間が たつと 字が 大きくなって、<ruby>部首<rt>ぶしゅ</rt></ruby>も ふえていくよ。どこまで つづけられるかな？<br>"+DESC.busyu[0]:play==="time"?"3分間で どれだけ 点を とれるかな？ あふれても おわりだよ。":play==="vs"?"1台を ふたりで こうたいに つかって つみ上げるよ。じぶんの 番で 字を おとしたら まけ。":DESC[mode][0];
   $("howto").innerHTML=DESC[mode][1];
   $("busyuOpts").hidden=!(mode==="busyu"&&(play==="free"||play==="time"));
   $("ruleOpts").hidden=mode!=="busyu";
@@ -1413,10 +1443,11 @@ function buildMenu(){
   const cs=list[stageIdx[mode]];$("stageGoal").textContent=`ステージ${stageIdx[mode]+1}：${cs.text}`+(mode==="busyu"?`（ぶしゅ${cs.count}つ）`:"");
   // counts
   const av=availRads().length,cb=$("counts");cb.innerHTML="";
-  for(const c of COUNTS){const b=document.createElement("button");b.setAttribute("aria-pressed",c===count);b.disabled=c>av;
+  for(const c of COUNTS){if(mode==="busyu"&&play==="free"&&c<GROW.start)continue;const b=document.createElement("button");b.setAttribute("aria-pressed",c===count);b.disabled=c>av;
     const best=store(bestKey(c));b.innerHTML=`${c}<small>${best?"ベスト "+best:"&nbsp;"}</small>`;
     b.onclick=()=>{count=c;store("busyu-count",c);buildMenu()};cb.appendChild(b)}
   if(count>av){count=COUNTS.filter(c=>c<=av).pop();buildMenu();return}
+  if(mode==="busyu"&&play==="free"&&count<GROW.start&&av>=GROW.start){count=GROW.start;buildMenu();return}
   const gb=$("grades");gb.innerHTML="";
   for(const g of GRADES){const b=document.createElement("button");b.textContent=g.name;b.setAttribute("aria-pressed",g.g===grade);
     b.onclick=()=>{grade=g.g;store("bd-grade",g.g);buildMenu()};gb.appendChild(b)}
@@ -1485,7 +1516,7 @@ function endGame(title){
   else if(play==="stage"){detail=`ステージ${stageIdx[mode]+1}：${stg.text}`;sfx("over")}
   else if(mode==="busyu"){
     const key=bestKey(count),prev=+store(key)||0;
-    detail=(play==="time"?"3分 タイムアタック・":"")+(hardOn()?"むずかしい・":"")+`ぶしゅ${active.length}つ・${cleared}こ けした`+(allClears?`・ぜんけし${allClears}回`:"")+`・じゅくご${jukuDone}つ・さいだい${maxCombo}コンボ`+(score>prev?"　じこベスト こうしん！":prev?`　ベスト ${prev}`:"");
+    detail=(play==="free"?`じかん ${Math.floor(now/60)}分${String(Math.floor(now)%60).padStart(2,"0")}びょう・`:"")+(play==="time"?"3分 タイムアタック・":"")+(hardOn()?"むずかしい・":"")+`ぶしゅ${active.length}つ・${cleared}こ けした`+(allClears?`・ぜんけし${allClears}回`:"")+`・じゅくご${jukuDone}つ・さいだい${maxCombo}コンボ`+(score>prev?"　じこベスト こうしん！":prev?`　ベスト ${prev}`:"");
     if(score>prev)store(key,score);sfx("over");
   }else{
     const prev=+store("dosu-best")||0;

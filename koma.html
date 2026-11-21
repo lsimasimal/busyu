@@ -495,7 +495,24 @@ const DWORD_SRC=`花火|はなび|火薬で光や音を楽しむもの
 野菜|やさい|食べるために そだてる 草
 図書|としょ|本
 雪山|ゆきやま|雪がつもった山
-夕日|ゆうひ|夕方の 太よう`;
+夕日|ゆうひ|夕方の 太よう
+森林|しんりん|木が たくさん 生えている ところ
+草花|くさばな|草や 花
+草木|くさき|草や 木
+手本|てほん|まねをして 学ぶもの
+学力|がくりょく|学んで 身につけた 力
+大学|だいがく|高校の あとに 学ぶ 学校
+上下|じょうげ|上と 下
+土木|どぼく|道や 川などを 作る しごと
+一日|いちにち|朝から 夜まで
+三人|さんにん|人が 三人
+千人|せんにん|人が 千人
+王女|おうじょ|王さまの むすめ
+玉子|たまご|にわとりなどの たまご
+水玉|みずたま|丸い つぶの もよう
+休学|きゅうがく|学校を しばらく 休むこと
+人手|ひとで|はたらく 人の 数
+町人|ちょうにん|むかし 町に すんでいた 人`;
 const IDIOM_SRC=`一石二鳥|いっせきにちょう|一つのことで二つの得をすること
 十人十色|じゅうにんといろ|考えや すきなものは 人それぞれ ちがうこと
 一期一会|いちごいちえ|一生に 一どの 出会いを 大切にすること
@@ -537,8 +554,8 @@ const gradeName=g=>g>=7?"中学":`小${g}`;
 // reading to show and speak: kun-yomi if there is one, otherwise on-yomi, in hiragana
 const kata2hira=t=>t.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
 const YOMI={一:"いち",三:"さん",七:"しち",八:"はち",十:"じゅう",六:"ろく",千:"せん",万:"まん",校:"こう",学:"がく",上:"うえ",下:"した",
-  天:"てん",公:"こう",午:"ご",王:"おう",字:"じ",番:"ばん",電:"でん",地:"ち",理:"り",本:"ほん",名:"な",陽:"よう",祥:"しょう",加:"くわえる",社:"しゃ",力:"ちから",九:"きゅう",才:"さい"};
-function readingOf(k){const d=KDATA[k];if(!d)return"";if(YOMI[k])return YOMI[k];const r=d.kun!=="—"?d.kun:d.on;return kata2hira(r.split("・")[0].replace(/[()]/g,""))}
+  天:"てん",公:"こう",午:"ご",王:"おう",字:"じ",番:"ばん",電:"でん",地:"ち",理:"り",本:"ほん",名:"な",陽:"よう",祥:"しょう",社:"しゃ",力:"ちから",九:"きゅう",才:"さい"};
+function readingOf(k){const d=KDATA[k];if(!d)return"";if(YOMI[k])return YOMI[k];const r=d.kun!=="—"?d.kun:d.on;return kata2hira(r.split("・")[0].replace(/\(([^)]*)\)/g,"（$1）"))}
 
 // ================= コマバトル =================
 const $=id=>document.getElementById(id);
@@ -623,7 +640,7 @@ const sfx=(n,...a)=>{try{SFX[n](...a)}catch(e){}};
 let jaVoice=null;
 function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));jaVoice=vs.find(v=>v.localService)||vs[0]||null}
 if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-function say(t){if(!voiceOn||!t||!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+function say(t){if(t)t=String(t).replace(/[（(]([^）)]*)[）)]/g,"$1");if(!voiceOn||!t||!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
 function syncBtns(){$("sfxBtn").setAttribute("aria-pressed",sfxOn);$("voiceBtn").setAttribute("aria-pressed",voiceOn)}
 $("sfxBtn").onclick=()=>{sfxOn=!sfxOn;store("km-sfx",sfxOn?"1":"0");syncBtns()};
 $("voiceBtn").onclick=()=>{voiceOn=!voiceOn;store("bd-voice",voiceOn?"1":"0");syncBtns()};
