@@ -48,6 +48,13 @@ canvas{display:block;height:100%;max-width:100%;touch-action:none;border-radius:
 .chip{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border-radius:999px;background:var(--field);border:1px solid var(--line);font-size:.8rem;font-weight:700}
 .chip i{font-style:normal;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:.9rem;background:var(--ink)}
 .chip.plain{padding:4px 12px}
+/* narrow phones: smaller header so the score stays on screen */
+@media (max-width:400px){.top{gap:4px}.brand{gap:4px}h1{font-size:1.3rem}.icon{width:30px;height:30px;font-size:.85rem}.stat b{font-size:1.35rem}.stat small{font-size:.64rem}}
+/* Busyu: up to 10 radicals in two fixed rows, so the board never has to change size mid-game */
+.legend.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%;min-height:88px;align-content:start}
+.legend.grid .chip{flex-direction:column;gap:1px;padding:3px 2px;border-radius:12px;font-size:.6rem;line-height:1.1;text-align:center;justify-content:center;min-width:0}
+.legend.grid .chip i{width:26px;height:22px;font-size:.85rem}
+.legend.grid .chip span{white-space:nowrap;overflow:hidden;text-overflow:clip;max-width:100%}
 .overlay{
   position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;
   gap:8px;padding:16px;text-align:center;overflow-y:auto;border-radius:14px;
@@ -1485,9 +1492,9 @@ function ask(msg,yes){asking=true;$("askMsg").textContent=msg;$("ask").hidden=fa
   $("askNo").onclick=()=>{asking=false;$("ask").hidden=true}}
 $("homeIcon").onclick=()=>{if(running)ask("ゲームをやめてホームにもどりますか？",goHome);else goHome()};$("homeBtn2").onclick=goHome;
 function buildLegend(){
-  const el=$("legend");el.innerHTML="";
+  const el=$("legend");el.innerHTML="";el.classList.toggle("grid",mode==="busyu");
   if(mode==="busyu")for(const r of active){const d=document.createElement("div");d.className="chip";
-    d.innerHTML=`<i style="${$("hint").checked?`background:${r.color}`:""}">${r.sym}</i>${r.name}`;el.appendChild(d)}
+    d.innerHTML=`<i style="${$("hint").checked?`background:${r.color}`:""}">${r.sym}</i><span>${r.name}</span>`;el.appendChild(d)}
   else{const d=document.createElement("div");d.className="chip plain";d.textContent=`土台：${idiom}（${WORDS[idiom].yomi}）`;el.appendChild(d)}
 }
 
@@ -1605,6 +1612,7 @@ function showCard(x){
 $("zkBtn2").onclick=()=>openZukan("over");
 $("zkClose").onclick=()=>{$("zukan").hidden=true;$(zFrom).hidden=false;$("homeIcon").hidden=zFrom==="home"};
 addEventListener("resize",resize);
+if("ResizeObserver" in window)new ResizeObserver(()=>resize()).observe(stage);
 
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 readCols();resize();buildMenu();syncSoundBtns();syncVoiceBtn();goHome();
